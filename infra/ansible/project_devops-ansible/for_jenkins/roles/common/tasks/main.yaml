@@ -1,0 +1,28 @@
+---
+- name: Fix broken dependencies (if any)
+  shell: apt-get --fix-broken install -y
+  register: fix_broken_result
+  changed_when: fix_broken_result.rc == 0
+  ignore_errors: yes
+
+- name: "Mettre à jour les paquets (apt)"
+  apt:
+    update_cache: yes
+    upgrade: dist
+  when: ansible_os_family == 'Debian'
+
+- name: "Mettre à jour les paquets (yum)"
+  yum:
+    name: "*"
+    state: latest
+  when: ansible_os_family == 'RedHat'
+
+- name: "Installer les paquets essentiels"
+  package:
+    name:
+      - curl
+      - wget
+      - git
+      - unzip
+      - htop
+    state: present

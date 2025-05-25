@@ -1,0 +1,13 @@
+#- name: Configuration du Load Balancer avec NGINX
+#  hosts: webservers
+#  become: true
+#  roles:
+#    - webserver
+
+- name: Configuration du Load Balancer avec NGINX
+#  hosts: jenkinservers
+  hosts: docker_hosts
+  become: true
+  roles:
+#    - jenkins
+    - docker

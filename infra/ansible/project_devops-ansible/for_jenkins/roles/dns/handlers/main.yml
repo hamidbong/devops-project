@@ -1,0 +1,5 @@
+# Handler pour redémarrer Bin
+- name: Redémarrer Bind9
+  service:
+    name: bind9
+    state: restarted

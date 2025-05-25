@@ -1,0 +1,29 @@
+# roles/dns/tasks/main.yml
+- name: Mettre à jour l'index des paquets
+  apt:
+    update_cache: yes
+
+#- name: Mettre à jour tous les paquets installés
+#  apt:
+#    upgrade: dist
+#    update_cache: yes
+
+- name: Installer Bind9
+  apt:
+    name: bind9
+    state: present
+    update_cache: yes
+
+- name: Configurer Bind9
+  template:
+    src: named.conf.local.j2   # Assurez-vous que ce template existe
+    dest: /etc/bind/named.conf.local
+  notify: Redémarrer Bind9
+
+- name: Configurer les zones DNS
+  template:
+    src: db.bongwebsite.com      # Template pour la zone DNS
+    dest: /etc/bind/db.bongwebsite.com
+  notify: Redémarrer Bind9
+
+# Handler pour redémarrer Bin

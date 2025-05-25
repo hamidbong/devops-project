@@ -1,0 +1,56 @@
+---
+- name: Fix broken dependencies (if any)
+  shell: apt-get --fix-broken install -y
+  register: fix_broken_result
+  changed_when: fix_broken_result.rc == 0
+  ignore_errors: yes
+
+- name: "Mettre à jour les paquets (apt)"
+  apt:
+    update_cache: yes
+    upgrade: dist
+  when: ansible_os_family == 'Debian'
+
+- name: "Mettre à jour les paquets (yum)"
+  yum:
+    name: "*"
+    state: latest
+  when: ansible_os_family == 'RedHat'
+
+- name: "Installer les paquets essentiels"
+  package:
+    name:
+      - curl
+      - wget
+      - git
+      - unzip
+      - htop
+    state: present
+
+- name: Disable swap
+  command: swapoff -a
+
+- name: Remove swap entry from fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*swap.*)$'
+    replace: '# \1'
+
+- name: Définir net.ipv4.ip_forward = 1
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: yes
+
+- name: Forcer l'activation immédiate
+  command: sysctl -w net.ipv4.ip_forward=1
+
+- name: Install dependencies
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+    state: present
+    update_cache: yes
+

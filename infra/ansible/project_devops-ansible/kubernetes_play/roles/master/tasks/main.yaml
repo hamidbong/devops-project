@@ -1,0 +1,16 @@
+- name: Réinitialiser Kubernetes s'il est déjà installé
+  command: kubeadm reset -f
+  ignore_errors: yes
+
+- name: Supprimer les anciens fichiers kube
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/kubernetes
+    - /var/lib/etcd
+    - /var/lib/kubelet
+    - /etc/cni
+    - /opt/cni
+    - /home/ubuntu/.kube/config
+  ignore_errors: yes
