@@ -1,22 +1,39 @@
 pipeline {
     agent any
-    stages {
-        stage("Build") {
-            steps {
-                echo 'building the application... three times '
-            }
-        }
-        stage("Test") {
-            steps {
-                echo 'testing the application... '
-            }
-        }
-        stage("Deploy") {
-            steps {
-                echo 'deploying the application... '
-            }
-        }
 
+    tools {
+        maven 'Maven 3.8.6'   // Ou autre outil de build
     }
 
+    environment {
+        SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/hamidbong/devops-project.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE}") {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=my_project -Dsonar.host.url=http://192.168.0.122:9000 -Dsonar.login=${sonarqube}'
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                waitForQualityGate abortPipeline: true
+            }
+        }
+    }
 }
