@@ -11,11 +11,20 @@ pipeline {
 
     stages {
 
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                sh 'mvn clean install'
+                checkout scm
             }
         }
+
+        stage('Build') {
+            steps {
+                dir('app') {
+                    sh 'mvn clean install'
+                }
+            }
+        }
+
 
         stage('SonarQube Analysis') {
             steps {
