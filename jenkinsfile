@@ -43,11 +43,20 @@ pipeline {
                 }
             }
         }*/
+        stage("Quality Gates") {
+            steps {
+                retry(3) {  // Retry up to 3 times
+                timeout(time: 5, unit: 'MINUTES') {  // Fail after 5 minutes
+                waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+}
 
-        stage("Quality Gate") {
+        /*stage("Quality Gate") {
             steps {
                 waitForQualityGate abortPipeline: true
             }
-        }
+        }*/
     }
 }
