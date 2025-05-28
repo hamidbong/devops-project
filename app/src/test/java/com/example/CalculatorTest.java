@@ -1,13 +1,9 @@
-package test.java.com.example;
+package com.example;  // Changé de "test.java.com.example"
 
 import org.junit.jupiter.api.Test;
-
-import main.java.com.example.Calculator;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CalculatorTest {
-
     @Test
     public void testAdd() {
         Calculator calc = new Calculator();
