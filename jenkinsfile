@@ -25,11 +25,12 @@ pipeline {
             }
         }
 
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=ci-cd-demo -Dsonar.host.url=http://192.168.100.32:9000 -Dsonar.login=${sonarqube}'
+                    dir('app') {
+                        sh 'mvn sonar:sonar -Dsonar.projectKey=ci-cd-demo -Dsonar.host.url=http://192.168.100.32:9000 -Dsonar.login=${sonarqube}'
+                    }
                 }
             }
         }
