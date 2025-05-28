@@ -34,7 +34,7 @@ pipeline {
                 }
             }
         }
-        stage("Quality Gate") {
+        /*stage("Quality Gate") {
             steps {
                 script {
                     echo "Checking SonarQube task status..."
@@ -42,12 +42,12 @@ pipeline {
                     echo "Quality Gate status: ${qg.status}"  // Logs PASSED/FAILED
                 }
             }
-        }
+        }*/
 
-        /*stage("Quality Gate") {
+        /stage("Quality Gate") {
             steps {
                 waitForQualityGate abortPipeline: true
             }
-        }*/
+        }
     }
 }
