@@ -29,7 +29,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     dir('app') {
-                        sh 'mvn sonar:sonar -Dsonar.projectKey=ci-cd-demo -Dsonar.host.url=http://192.168.100.32:9000 -Dsonar.login=${sonarqube}'
+                        sh 'mvn sonar:sonar -Dsonar.projectKey=ci-cd-demo -Dsonar.host.url=http://192.168.100.32:9000 -Dsonar.token=${sonarqube}'
                     }
                 }
             }
