@@ -66,21 +66,22 @@ pipeline {
             steps {
                 script {
                     // Build the image locally
-                    docker.build("${PRIVATE_REGISTRY}/${IMAGE_NAME}:${env.BUILD_ID}")
+                    docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                 }
             }
         }
 
+       
         stage('Scan Local Image with Trivy') {
             steps {
                 script {
                     sh """
-                        docker run --rm \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        aquasec/trivy image \
+                        aquasec/trivy client \
+                        --remote ${TRIVY_SERVER} \
                         --exit-code 1 \
                         --severity CRITICAL,HIGH \
-                        --ignore-unfixed \
+                        --format json \
+                        --output trivy-scan.json \
                         ${IMAGE_NAME}:${env.BUILD_ID}
                     """
                 }
