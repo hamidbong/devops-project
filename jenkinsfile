@@ -72,13 +72,14 @@ pipeline {
         }
 
        
-        stage('Scan Local Image with Trivy') {
+        stage('Scan with Trivy') {
             steps {
                 script {
                     sh """
                         docker run --rm \
-                            aquasec/trivy:latest client \
-                            --remote ${TRIVY_SERVER} \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest \
+                            image \
                             --exit-code 1 \
                             --severity CRITICAL,HIGH \
                             --format json \
