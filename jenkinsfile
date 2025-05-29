@@ -74,15 +74,14 @@ pipeline {
         stage('Scan Local Image with Trivy') {
             steps {
                 script {
-                    // Scan the locally built image (no private registry reference)
                     sh """
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            aquasec/trivy image \
-                            --exit-code 1 \           // Fail pipeline on vulnerabilities
-                            --severity CRITICAL,HIGH \ // Only check CRITICAL/HIGH
-                            --ignore-unfixed \        // Ignore unfixed vulnerabilities
-                            ${IMAGE_NAME}:${env.BUILD_ID}  // Local image tag
+                    docker run --rm \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
+                    aquasec/trivy image \
+                    --exit-code 1 \
+                    --severity CRITICAL,HIGH \
+                    --ignore-unfixed \
+                    ${IMAGE_NAME}:${env.BUILD_ID}
                     """
                 }
             }
@@ -102,5 +101,5 @@ pipeline {
 
 
     }
-    
+
 }
