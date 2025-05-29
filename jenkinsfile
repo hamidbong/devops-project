@@ -76,7 +76,8 @@ pipeline {
             steps {
                 script {
                     sh """
-                        aquasec/trivy client \
+                        docker run --rm \
+                            aquasec/trivy:latest client \
                             --remote ${TRIVY_SERVER} \
                             --exit-code 1 \
                             --severity CRITICAL,HIGH \
