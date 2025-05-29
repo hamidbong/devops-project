@@ -77,12 +77,12 @@ pipeline {
                 script {
                     sh """
                         aquasec/trivy client \
-                        --remote ${TRIVY_SERVER} \
-                        --exit-code 1 \
-                        --severity CRITICAL,HIGH \
-                        --format json \
-                        --output trivy-scan.json \
-                        ${IMAGE_NAME}:${env.BUILD_ID}
+                            --remote ${TRIVY_SERVER} \
+                            --exit-code 1 \
+                            --severity CRITICAL,HIGH \
+                            --format json \
+                            --output trivy-scan.json \
+                            ${IMAGE_NAME}:${env.BUILD_ID}
                     """
                 }
             }
