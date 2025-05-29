@@ -56,11 +56,11 @@ pipeline {
         stage('Build and Push Docker Image') {
         // Replace with your Jenkins credentials ID for Docker Hub
             docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
-                def customImage = docker.build("hamidbong/webapp:${env.BUILD_ID}")
+                def customImage = docker.build("hamidbong/calculatorapps:${env.BUILD_ID}")
                 customImage.push()
             }
         }
-        
+
         /*stage("Quality Gate") {
             steps {
                 waitForQualityGate abortPipeline: true
