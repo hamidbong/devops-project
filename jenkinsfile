@@ -8,6 +8,8 @@ pipeline {
     environment {
         SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
         IMAGE_NAME = "hamidbong/calculatorapps"
+
+        TRIVY_SERVER = "http://192.168.100.32:4954"
     }
 
     stages {
@@ -59,7 +61,34 @@ pipeline {
                 sh 'docker version'
             }
         }
-        
+
+         stages {
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the image locally
+                    docker.build("${PRIVATE_REGISTRY}/${IMAGE_NAME}:${env.BUILD_ID}")
+                }
+            }
+        }
+
+        stage('Scan with Trivy') {
+            steps {
+                script {
+                    // Scan the locally built image (fail on CRITICAL/HIGH)
+                    sh """
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy image \
+                            --exit-code 1 \
+                            --severity CRITICAL,HIGH \
+                            --ignore-unfixed \
+                            ${PRIVATE_REGISTRY}/${IMAGE_NAME}:${env.BUILD_ID}
+                    """
+                }
+            }
+        }
+
         stage('Build and Push Docker Image') {
             steps {
                 script {
@@ -71,19 +100,5 @@ pipeline {
                 }
             }
         }
-
-        /*stage('Build and Push Docker Image') {
-        // Replace with your Jenkins credentials ID for Docker Hub
-            docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
-                def customImage = docker.build("hamidbong/calculatorapps:${env.BUILD_ID}")
-                customImage.push()
-            }
-        }*/
-
-        /*stage("Quality Gate") {
-            steps {
-                waitForQualityGate abortPipeline: true
-            }
-        }*/
     }
 }
