@@ -103,6 +103,8 @@ pipeline {
             }
         }
 
+        
+
         /*stage('Scan with Trivy') {
             steps {
                 script {
