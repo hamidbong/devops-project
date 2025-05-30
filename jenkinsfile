@@ -83,6 +83,29 @@ pipeline {
         stage('Scan with Trivy') {
             steps {
                 script {
+                    // Always run with DB update, but use cache if available
+                    sh """
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v trivy_cache:/root/.cache/trivy \
+                            -v trivy_javadb_cache:/root/.cache/trivy-java-db \
+                            -e TRIVY_TIMEOUT=30m \
+                            aquasec/trivy:latest \
+                            image \
+                            --exit-code 1 \
+                            --severity CRITICAL,HIGH \
+                            --ignore-unfixed \
+                            --timeout 30m \
+                            --scanners vuln \
+                            ${IMAGE_NAME}:${env.BUILD_ID}
+                    """
+                }
+            }
+        }
+
+        /*stage('Scan with Trivy') {
+            steps {
+                script {
                     sh """
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
@@ -101,7 +124,7 @@ pipeline {
                     """
                 }
             }
-        }
+        }*/
 
        
         /*stage('Scan with Trivy') {
