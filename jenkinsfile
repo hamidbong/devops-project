@@ -71,8 +71,40 @@ pipeline {
             }
         }
 
-       
+        stage('Setup Caches') {
+            steps {
+                script {
+                    sh 'docker volume create --name trivy_cache || true'
+                    sh 'docker volume create --name trivy_javadb_cache || true'
+                }
+            }
+        }
+
         stage('Scan with Trivy') {
+            steps {
+                script {
+                    sh """
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v trivy_cache:/root/.cache/trivy \
+                            -v trivy_javadb_cache:/root/.cache/trivy-java-db \
+                            -e TRIVY_TIMEOUT=15m \
+                            aquasec/trivy:latest \
+                            image \
+                            --exit-code 1 \
+                            --severity CRITICAL,HIGH \
+                            --ignore-unfixed \
+                            --skip-update \
+                            --timeout 15m \
+                            --scanners vuln \
+                            ${IMAGE_NAME}:${env.BUILD_ID}
+                    """
+                }
+            }
+        }
+
+       
+        /*stage('Scan with Trivy') {
             steps {
                 script {
                     sh """
@@ -88,7 +120,8 @@ pipeline {
                     """
                 }
             }
-        }
+        }*/
+
 
         stage('Build and Push Docker Image') {
             steps {
