@@ -1,9 +1,11 @@
 pipeline {
+
     agent any
 
     tools {
         maven 'Maven 3.8.6'   // Ou autre outil de build
     }
+
 
     environment {
         SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
@@ -11,6 +13,7 @@ pipeline {
 
         TRIVY_SERVER = "http://192.168.100.32:4954"
     }
+
 
     stages {
 
@@ -20,6 +23,7 @@ pipeline {
             }
         }
 
+
         stage('Build') {
             steps {
                 dir('app') {
@@ -27,6 +31,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('SonarQube Analysis') {
             steps {
@@ -37,15 +42,8 @@ pipeline {
                 }
             }
         }
-        /*stage("Quality Gate") {
-            steps {
-                script {
-                    echo "Checking SonarQube task status..."
-                    def qg = waitForQualityGate abortPipeline: true
-                    echo "Quality Gate status: ${qg.status}"  // Logs PASSED/FAILED
-                }
-            }
-        }*/
+
+
         stage("Quality Gates") {
             steps {
                 retry(3) {
@@ -56,11 +54,13 @@ pipeline {
             }
         }
         
+
         stage('Docker Access Test') {
             steps {
                 sh 'docker version'
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
@@ -71,6 +71,7 @@ pipeline {
             }
         }
 
+
         stage('Setup Caches') {
             steps {
                 script {
@@ -79,6 +80,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Scan with Trivy') {
             steps {
@@ -102,50 +104,6 @@ pipeline {
                 }
             }
         }
-
-        
-
-        /*stage('Scan with Trivy') {
-            steps {
-                script {
-                    sh """
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            -v trivy_cache:/root/.cache/trivy \
-                            -v trivy_javadb_cache:/root/.cache/trivy-java-db \
-                            -e TRIVY_TIMEOUT=15m \
-                            aquasec/trivy:latest \
-                            image \
-                            --exit-code 1 \
-                            --severity CRITICAL,HIGH \
-                            --ignore-unfixed \
-                            --skip-db-update \
-                            --timeout 15m \
-                            --scanners vuln \
-                            ${IMAGE_NAME}:${env.BUILD_ID}
-                    """
-                }
-            }
-        }*/
-
-       
-        /*stage('Scan with Trivy') {
-            steps {
-                script {
-                    sh """
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            aquasec/trivy:latest \
-                            image \
-                            --exit-code 1 \
-                            --severity CRITICAL,HIGH \
-                            --format json \
-                            --output trivy-scan.json \
-                            ${IMAGE_NAME}:${env.BUILD_ID}
-                    """
-                }
-            }
-        }*/
 
 
         stage('Build and Push Docker Image') {
