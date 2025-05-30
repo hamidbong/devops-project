@@ -94,7 +94,7 @@ pipeline {
                             --exit-code 1 \
                             --severity CRITICAL,HIGH \
                             --ignore-unfixed \
-                            --skip-update \
+                            --skip-db-update \
                             --timeout 15m \
                             --scanners vuln \
                             ${IMAGE_NAME}:${env.BUILD_ID}
