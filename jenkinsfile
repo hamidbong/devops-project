@@ -10,6 +10,8 @@ pipeline {
     environment {
         SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
         IMAGE_NAME = "hamidbong/calculatorapps"
+        SERVICES = 'order-service,user-service'
+        STATE_FILE = ".failed_services_main.txt"
 
         TRIVY_SERVER = "http://192.168.100.32:4954"
     }
@@ -27,6 +29,8 @@ pipeline {
         stage('Build') {
             steps {
                 dir('app') {
+                    def service = env.SERVICES
+                    addToFailedFile(service, env.STATE_FILE)
                     sh 'mvn clean install'
                 }
             }
@@ -121,4 +125,15 @@ pipeline {
 
     }
 
+}
+def addToFailedFile(service, stateFile) {
+  def failedServices = [] as Set
+  if (fileExists(stateFile)) {
+    failedServices = readFile(stateFile).split('\n')
+      .collect { it.trim() }
+      .findAll { it } as Set
+  }
+  if (!failedServices.contains(service)) {
+    writeFile file: stateFile, text: (failedServices + service).toList().join('\n').trim()
+  }
 }
