@@ -24,14 +24,14 @@ pipeline {
                 checkout scm
             }
         }
-    stage('Build Docker Image') {
-        steps {
-            script {
-                def service = env.SERVICES
-                addToFailedFile(service, env.STATE_FILE)
+        stage('essa') {
+            steps {
+                script {
+                    def service = env.SERVICES
+                    addToFailedFile(service, env.STATE_FILE)
+                }
             }
         }
-    }
 
         stage('Build') {
             steps {
