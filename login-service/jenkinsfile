@@ -15,6 +15,12 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Debug') {
+          steps {
+            sh 'ls -R .' // Pour voir le contenu du workspace
+          }
+        }
+
 
         stage('Install dependencies') {
           steps {
