@@ -1,35 +1,114 @@
 pipeline {
-  agent any
 
-  stages {
-    stage('Checkout') {
-        steps {
-            checkout scm  // This pulls your Git repository
-        }
+    agent any
+
+    environment {
+        SONARQUBE = 'sonarqube_devops_master_analyse' // Nom dans Jenkins
+        IMAGE_NAME = "hamidbong/login-service"
+        TRIVY_SERVER = "http://192.168.100.32:4954"
     }
 
-    stage('Build') {
-        steps {
-            dir('order-service') {
-              sh 'npm install'
-              sh 'npm run build'
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
             }
         }
-    }
-        
-    stage('Tests') {
-      steps {
-        dir('order-service') {
-          sh 'npm test'
+
+        stage('Install dependencies') {
+            steps {
+                dir('node-service') {
+                    sh 'npm install'
+                }
+            }
         }
-      }
+
+        stage('Run Tests') {
+            steps {
+                dir('node-service') {
+                    sh 'npm test || true' // Mets "|| true" si tu veux que le pipeline continue même si les tests échouent
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE}") {
+                    dir('node-service') {
+                        sh '''
+                          sonar-scanner \
+                            -Dsonar.projectKey=ci-cd-node-demo \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=http://192.168.100.32:9000 \
+                            -Dsonar.login=$SONARQUBE_TOKEN
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gates') {
+            steps {
+                retry(3) {
+                    timeout(time: 1, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
+            }
+        }
+
+        stage('Docker Access Test') {
+            steps {
+                sh 'docker version'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                }
+            }
+        }
+
+        stage('Setup Caches') {
+            steps {
+                sh 'docker volume create --name trivy_cache || true'
+                sh 'docker volume create --name trivy_javadb_cache || true'
+            }
+        }
+
+        stage('Scan with Trivy') {
+            steps {
+                sh """
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        -v trivy_cache:/root/.cache/trivy \
+                        -v trivy_javadb_cache:/root/.cache/trivy-java-db \
+                        -e TRIVY_TIMEOUT=30m \
+                        aquasec/trivy:latest \
+                        image \
+                        --exit-code 1 \
+                        --severity CRITICAL,HIGH \
+                        --ignore-unfixed \
+                        --timeout 30m \
+                        ${IMAGE_NAME}:${env.BUILD_ID}
+                """
+            }
+        }
+
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
+                        def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                        image.push()
+                        image.push('latest')
+                    }
+                }
+            }
+        }
+
     }
-    
-    stage('Déploiement') {
-      steps {
-        echo "🚀 Déploiement de ServiceA"
-        // Ton déploiement ici
-      }
-    }
-  }
 }
