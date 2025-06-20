@@ -1,0 +1,124 @@
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'Maven 3.8.6'   // Ou autre outil de build
+    }
+
+
+    environment {
+        SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
+        IMAGE_NAME = "hamidbong/docker-quickstart"
+
+        TRIVY_SERVER = "http://192.168.100.32:4954"
+    }
+
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+
+        stage('Build') {
+            steps {
+                dir('user-service') {
+                    sh 'mvn clean install'
+                }
+            }
+        }
+
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE}") {
+                    dir('user-service') {
+                        sh 'mvn sonar:sonar -Dsonar.projectKey=ci-cd-demo -Dsonar.host.url=http://192.168.100.32:9000 -Dsonar.login=${sonarqube}'
+                    }
+                }
+            }
+        }
+
+
+        stage("Quality Gates") {
+            steps {
+                retry(3) {
+                    timeout(time: 1, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
+            }
+        }
+        
+
+        stage('Docker Access Test') {
+            steps {
+                sh 'docker version'
+            }
+        }
+
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the image lloocally////////
+                    docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                }
+            }
+        }
+
+
+        stage('Setup Caches') {
+            steps {
+                script {
+                    sh 'docker volume create --name trivy_cache || true'
+                    sh 'docker volume create --name trivy_javadb_cache || true'
+                }
+            }
+        }
+
+
+        stage('Scan with Trivy') {
+            steps {
+                script {
+                    // Always run with DB update, but use cache if available
+                    sh """
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v trivy_cache:/root/.cache/trivy \
+                            -v trivy_javadb_cache:/root/.cache/trivy-java-db \
+                            -e TRIVY_TIMEOUT=30m \
+                            aquasec/trivy:latest \
+                            image \
+                            --exit-code 1 \
+                            --severity CRITICAL,HIGH \
+                            --ignore-unfixed \
+                            --timeout 30m \
+                            --scanners vuln \
+                            ${IMAGE_NAME}:${env.BUILD_ID}
+                    """
+                }
+            }
+        }
+
+
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
+                        def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                        image.push()
+                        image.push('latest') // Optional: also push "latest" tag
+                    }
+                }
+            }
+        }
+
+
+    }
+
+}

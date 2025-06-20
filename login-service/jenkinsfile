@@ -1,0 +1,35 @@
+pipeline {
+  agent any
+
+  stages {
+    stage('Checkout') {
+        steps {
+            checkout scm  // This pulls your Git repository
+        }
+    }
+
+    stage('Build') {
+        steps {
+            dir('order-service') {
+              sh 'npm install'
+              sh 'npm run build'
+            }
+        }
+    }
+        
+    stage('Tests') {
+      steps {
+        dir('order-service') {
+          sh 'npm test'
+        }
+      }
+    }
+    
+    stage('Déploiement') {
+      steps {
+        echo "🚀 Déploiement de ServiceA"
+        // Ton déploiement ici
+      }
+    }
+  }
+}
