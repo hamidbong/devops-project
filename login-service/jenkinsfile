@@ -17,12 +17,13 @@ pipeline {
         }
 
         stage('Install dependencies') {
-            steps {
-                dir('login-service') {
-                    sh 'npm install'
-                }
+          steps {
+            dir('login-service') {
+              sh 'npm install'
             }
+          }
         }
+
 
         stage('Run Tests') {
             steps {
