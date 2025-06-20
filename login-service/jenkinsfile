@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE = 'sonarqube_devops_master_analyse' // Nom dans Jenkins
+        SONARQUBE = 'sonarqube_devops_master_analyse'
         IMAGE_NAME = "hamidbong/login-service"
         TRIVY_SERVER = "http://192.168.100.32:4954"
     }
@@ -15,26 +15,19 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Debug') {
-          steps {
-            sh 'ls -R .' // Pour voir le contenu du workspace
-          }
-        }
-
 
         stage('Install dependencies') {
-          steps {
-            dir('login-service') {
-              sh 'npm install'
+            steps {
+                dir('login-service') {
+                    sh 'npm install'
+                }
             }
-          }
         }
-
 
         stage('Run Tests') {
             steps {
                 dir('login-service') {
-                    sh 'npm test || true' // Mets "|| true" si tu veux que le pipeline continue même si les tests échouent
+                    sh 'npm test || true'
                 }
             }
         }
@@ -44,11 +37,11 @@ pipeline {
                 withSonarQubeEnv("${SONARQUBE}") {
                     dir('login-service') {
                         sh '''
-                          sonar-scanner \
-                            -Dsonar.projectKey=ci-cd-node-demo \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=http://192.168.100.32:9000 \
-                            -Dsonar.login=$SONARQUBE_TOKEN
+                            sonar-scanner \
+                              -Dsonar.projectKey=ci-cd-node-demo \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=http://192.168.100.32:9000 \
+                              -Dsonar.login=$SONARQUBE_TOKEN
                         '''
                     }
                 }
@@ -73,8 +66,10 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                dir('login-service') {
+                    script {
+                        docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                    }
                 }
             }
         }
@@ -109,7 +104,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
-                        def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                        def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "./login-service")
                         image.push()
                         image.push('latest')
                     }
