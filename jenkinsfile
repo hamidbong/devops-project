@@ -1,144 +1,137 @@
+def buildResults = [:]
+def buildState = [services: [:]]
+
 pipeline {
+  agent any
 
-    agent any
-
-    tools {
-        maven 'Maven 3.8.6'   // Ou autre outil de build
-    }
-
-
-    environment {
-        SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
-        IMAGE_NAME = "hamidbong/calculatorapps"
-        SERVICES = 'order-service,user-service'
-        STATE_FILE = ".failed_services_main.txt"
-
-        TRIVY_SERVER = "http://192.168.100.32:4954"
-    }
-
-
-    stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        stage('essa') {
-            steps {
-                script {
-                    def service = env.SERVICES
-                    addToFailedFile(service, env.STATE_FILE)
-                }
-            }
-        }
-
-        stage('Build') {
-            steps {
-                dir('app') {
-                    sh 'mvn clean install'
-                }
-            }
-        }
-
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    dir('app') {
-                        sh 'mvn sonar:sonar -Dsonar.projectKey=ci-cd-demo -Dsonar.host.url=http://192.168.100.32:9000 -Dsonar.login=${sonarqube}'
-                    }
-                }
-            }
-        }
-
-
-        stage("Quality Gates") {
-            steps {
-                retry(3) {
-                    timeout(time: 1, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
-                }
-            }
-        }
-        
-
-        stage('Docker Access Test') {
-            steps {
-                sh 'docker version'
-            }
-        }
-
-
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    // Build the image locally
-                    docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
-                }
-            }
-        }
-
-
-        stage('Setup Caches') {
-            steps {
-                script {
-                    sh 'docker volume create --name trivy_cache || true'
-                    sh 'docker volume create --name trivy_javadb_cache || true'
-                }
-            }
-        }
-
-
-        stage('Scan with Trivy') {
-            steps {
-                script {
-                    // Always run with DB update, but use cache if available
-                    sh """
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            -v trivy_cache:/root/.cache/trivy \
-                            -v trivy_javadb_cache:/root/.cache/trivy-java-db \
-                            -e TRIVY_TIMEOUT=30m \
-                            aquasec/trivy:latest \
-                            image \
-                            --exit-code 1 \
-                            --severity CRITICAL,HIGH \
-                            --ignore-unfixed \
-                            --timeout 30m \
-                            --scanners vuln \
-                            ${IMAGE_NAME}:${env.BUILD_ID}
-                    """
-                }
-            }
-        }
-
-
-        stage('Build and Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
-                        def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
-                        image.push()
-                        image.push('latest') // Optional: also push "latest" tag
-                    }
-                }
-            }
-        }
-
-
-    }
-
-}
-def addToFailedFile(service, stateFile) {
-  def failedServices = [] as Set
-  if (fileExists(stateFile)) {
-    failedServices = readFile(stateFile).split('\n')
-      .collect { it.trim() }
-      .findAll { it } as Set
+  environment {
+    SERVICES = 'login-service,gestion-prod-service'
+    BUILD_STATE_FILE = '.build-state.txt'
   }
-  if (!failedServices.contains(service)) {
-    writeFile file: stateFile, text: (failedServices + service).toList().join('\n').trim()
+
+  stages {
+    stage('Préparation') {
+      steps {
+        script {
+          try {
+            step([
+              $class: 'CopyArtifact',
+              projectName: env.JOB_NAME,
+              selector: lastSuccessful(),
+              filter: env.BUILD_STATE_FILE,
+              target: '.',
+              flatten: true
+            ])
+            echo "✅ Artefact récupéré avec succès"
+          } catch (Exception e) {
+            echo "⚠️ Impossible de restaurer l'artefact : ${e.message}"
+          }
+
+          // 🔁 Charger les services en échec précédent
+          def previousFailures = [] as Set
+          if (fileExists(env.BUILD_STATE_FILE)) {
+            readFile(env.BUILD_STATE_FILE).trim().split('\n').each { line ->
+              def parts = line.split(':', 5)
+              if (parts.size() == 5 && parts[1] == 'FAILURE') {
+                previousFailures << parts[0]
+              }
+            }
+            echo "⚠️ Services échoués précédemmentt : ${previousFailures}"
+          } else {
+            echo "ℹ️ Aucun fichier d'état trouvé"
+          }
+
+          // 🔍 Détection des fichiers modifiés via Git
+          def changedFiles = []
+          try {
+            def gitPrevious = sh(script: 'git rev-parse HEAD~1 || echo HEAD', returnStdout: true).trim()
+            def gitCurrent = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+            def diffOutput = sh(script: "git diff --name-only ${gitPrevious} ${gitCurrent} || echo ''", returnStdout: true).trim()
+            changedFiles = diffOutput ? diffOutput.split('\n').findAll { it.trim() } : []
+            echo "🔍 Fichiers modifiés : ${changedFiles}"
+          } catch (Exception e) {
+            echo "⚠️ Erreur détection changements : ${e.message}"
+          }
+
+          // 🧠 Déterminer les services affectés
+          def services = env.SERVICES.split(',').collect { it.trim() } as Set
+          def affectedServices = services.findAll { service ->
+            changedFiles.any { file -> file.startsWith("${service}/") }
+          } as Set
+          affectedServices.addAll(previousFailures)
+
+          echo "🚀 Services à builder : ${affectedServices}"
+          env.AFFECTED_SERVICES = affectedServices.join(',')
+        }
+      }
+    }
+
+    stage('Build Microservices') {
+      steps {
+        script {
+          def servicesToBuild = env.AFFECTED_SERVICES.split(',').collect { it.trim() }.findAll { it }
+          if (servicesToBuild.isEmpty()) {
+            echo "ℹ️ Aucun service à builder"
+          } else {
+            servicesToBuild.each { service ->
+              echo "🚀 Déclenchement du job pour ${service}"
+              def result = build job: "${service}/main",
+                                wait: true,
+                                propagate: false,
+                                parameters: []
+
+              def status = result.result
+              echo "🔎 Résultat ${service} : ${status}"
+
+              buildResults[service] = status
+              buildState.services[service] = [
+                status: status,
+                buildNumber: result.number,
+                buildUrl: result.absoluteUrl,
+                timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+              ]
+            }
+
+            // 💾 Sauvegarde de l’état sous forme texte
+            def lines = buildState.services.collect { svc, info ->
+              "${svc}:${info.status}:${info.buildNumber}:${info.buildUrl}:${info.timestamp}"
+            }
+            writeFile file: env.BUILD_STATE_FILE, text: lines.join('\n')
+            echo "✅ État texte sauvegardé dans ${env.BUILD_STATE_FILE}"
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    failure {
+      echo "❌ Pipeline orchestrateur échoué."
+    }
+
+    always {
+      archiveArtifacts artifacts: env.BUILD_STATE_FILE, fingerprint: true
+      echo "📝 Résumé des builds :"
+      script {
+        if (buildResults) {
+          buildResults.each { service, result ->
+            echo "🔎 ${service} : ${result}"
+          }
+
+          def successCount = buildResults.count { k, v -> v == 'SUCCESS' }
+          def failureCount = buildResults.count { k, v -> v == 'FAILURE' }
+          def abortedCount = buildResults.count { k, v -> v == 'ABORTED' }
+
+          echo "📊 TOTAL: ${buildResults.size()}, SUCCÈS: ${successCount}, ÉCHECS: ${failureCount}, ABANDONNÉS: ${abortedCount}"
+        } else {
+          echo "ℹ️ Aucun résultat de build à afficher."
+        }
+
+        if (fileExists(env.BUILD_STATE_FILE)) {
+          echo "📂 Contenu du fichier d'état texte :"
+          echo readFile(env.BUILD_STATE_FILE)
+        }
+      }
+    }
   }
 }
