@@ -18,7 +18,7 @@ pipeline {
 
         stage('Install dependencies') {
             steps {
-                dir('node-service') {
+                dir('login-service') {
                     sh 'npm install'
                 }
             }
@@ -26,7 +26,7 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                dir('node-service') {
+                dir('login-service') {
                     sh 'npm test || true' // Mets "|| true" si tu veux que le pipeline continue même si les tests échouent
                 }
             }
@@ -35,7 +35,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
-                    dir('node-service') {
+                    dir('login-service') {
                         sh '''
                           sonar-scanner \
                             -Dsonar.projectKey=ci-cd-node-demo \
