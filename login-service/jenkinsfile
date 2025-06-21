@@ -9,7 +9,7 @@ pipeline {
         SONAR_TOKEN = credentials('sonarqube_token-login')
         SONARQUBE = 'sonarqube_devops_master_analyse'
         IMAGE_NAME = "hamidbong/login-service"
-        TRIVY_SERVER = "http://192.168.1.20:4954"
+        TRIVY_SERVER = "http://192.168.100.151:4954"
     }
     
 
@@ -70,58 +70,6 @@ pipeline {
                 }
             }
         }
-        /*stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    sh 'SonarScanner -Dsonar.projectKey=ci-cd-npm-node -Dsonar.projectName=login-service -Dsonar.sources=. -Dsonar.login=$SONAR_TOKEN'
-                }
-            }
-        }
-
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SonarScanner}") {
-                    sh '''
-                    sonar-scanner \
-                    -Dsonar.projectKey=ci-cd-npm-node \
-                    -Dsonar.projectName=login-service \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=http://192.168.100.151:9000 \
-                    -Dsonar.login=${SONAR_TOKEN} \
-                    -Dsonar.nodejs.executable=$(which node) \
-                    -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                    '''
-                }
-            }
-        }
-        
-        /*stage('Sonar Analysis') {
-           
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    sh 'sonar-scanner -Dsonar.projectKey=ci-cd-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}'
-                }
-            }
-        }*/
-
-
-        /*stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    dir('login-service') {
-                        sh '''
-                            sonar-scanner \
-                              -Dsonar.projectKey=ci-cd-node-demo \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=http://192.168.1.20:9000 \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
-                    }
-                }
-            }
-        }*/
 
         stage('Quality Gates') {
             steps {
