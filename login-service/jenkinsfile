@@ -2,9 +2,6 @@ pipeline {
 
     agent any
 
-    tools {
-        sonarqubeScanner 'SonarScanner'
-    }
 
 
     environment {
@@ -60,7 +57,6 @@ pipeline {
                     -Dsonar.login=${SONAR_TOKEN} \
                     -Dsonar.nodejs.executable=$(which node) \
                     -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                    -Dsonar.exclusions=**/node_modules/**
                     '''
                 }
             }
