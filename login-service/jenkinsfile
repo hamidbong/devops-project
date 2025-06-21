@@ -35,21 +35,21 @@ pipeline {
                 }
             }
         }
-        stage('SonarQube Analysis') {
+        /*stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                     sh 'SonarScanner -Dsonar.projectKey=ci-cd-npm-node -Dsonar.projectName=login-service -Dsonar.sources=. -Dsonar.login=$SONAR_TOKEN'
                 }
             }
-        }
+        }*/
 
 
-        /*stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
+                withSonarQubeEnv("${SonarScanner}") {
                     sh '''
-                    sonarqubeScanner \
+                    sonar-scanner \
                     -Dsonar.projectKey=ci-cd-npm-node \
                     -Dsonar.projectName=login-service \
                     -Dsonar.sources=. \
@@ -60,7 +60,7 @@ pipeline {
                     '''
                 }
             }
-        }*/
+        }
         
         /*stage('Sonar Analysis') {
            
