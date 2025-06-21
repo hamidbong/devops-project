@@ -3,6 +3,7 @@ pipeline {
     agent any
 
     environment {
+        SONAR_TOKEN = credentials('sonarqube')
         SONARQUBE = 'sonarqube_devops_master_analyse'
         IMAGE_NAME = "hamidbong/login-service"
         TRIVY_SERVER = "http://192.168.1.178:4954"
@@ -53,7 +54,7 @@ pipeline {
                               -Dsonar.projectKey=ci-cd-node-demo \
                               -Dsonar.sources=. \
                               -Dsonar.host.url=http://192.168.1.178:9000 \
-                              -Dsonar.login=$sonarqube
+                              -Dsonar.login=${SONAR_TOKEN}
                         '''
                     }
                 }
