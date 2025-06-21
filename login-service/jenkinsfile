@@ -33,21 +33,22 @@ pipeline {
             }
         }
 
-        /*stage('Sonar Analysis') {
-            environment {
+        stage('Sonar Analysis') {
+            /*environment {
                 SONAR_TOKEN = credentials('sonarqube')
-            }
+            }*/
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     sh "sonar-scanner -Dsonar.projectKey=ci-cd-node-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}"
                 }
             }
-        }*/
+        }
 
 
-        stage('SonarQube Analysis') {
+        /*stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
+                    dir('login-service') {
                         sh '''
                             sonar-scanner \
                               -Dsonar.projectKey=ci-cd-node-demo \
@@ -55,10 +56,10 @@ pipeline {
                               -Dsonar.host.url=http://192.168.1.178:9000 \
                               -Dsonar.login=${SONAR_TOKEN}
                         '''
-                    
+                    }
                 }
             }
-        }
+        }*/
 
         stage('Quality Gates') {
             steps {
