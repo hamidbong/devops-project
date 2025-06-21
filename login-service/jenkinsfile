@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('sonarqube')
+        SONAR_TOKEN = credentials('sonarqube_token-login')
         SONARQUBE = 'sonarqube_devops_master_analyse'
         IMAGE_NAME = "hamidbong/login-service"
         TRIVY_SERVER = "http://192.168.1.20:4954"
@@ -36,15 +36,18 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
+                withSonarQubeEnv('SonarQube') {
                     sh """
-                        SonarScanner \
-                        -Dsonar.projectKey=ci-cd-npm-node \
-                        -Dsonar.projectName='login-service' \
-                        -Dsonar.projectVersion=1.0 \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://192.168.100.151:9000 \
-                        -Dsonar.login=${SONAR_TOKEN}
+                    sonar-scanner \
+                      -Dsonar.projectKey=ci-cd-npm-node \
+                      -Dsonar.projectName=login-service \
+                      -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=http://192.168.100.151:9000 \
+                      -Dsonar.token=${SONAR_TOKEN} \
+                      -Dsonar.nodejs.executable=$(which node) \
+                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                      -Dsonar.exclusions=**/node_modules/**
                     """
                 }
             }
