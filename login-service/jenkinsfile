@@ -39,7 +39,7 @@ pipeline {
             }*/
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
-                    sh 'sonar-scanner -Dsonar.projectKey=ci-cd-node-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}'
+                    sh 'sonar-scanner -Dsonar.projectKey=ci-cd-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}'
                 }
             }
         }
