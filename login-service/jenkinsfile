@@ -2,6 +2,9 @@ pipeline {
 
     agent any
 
+    tools {
+        nodejs 'NodeJS_20'
+    }
 
 
     environment {
@@ -17,6 +20,16 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+        
+        stage('Verify Node.js') {
+            steps {
+                sh '''
+                node --version
+                npm --version
+                which node
+                '''
             }
         }
 
