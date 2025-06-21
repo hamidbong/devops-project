@@ -8,10 +8,7 @@ pipeline {
         IMAGE_NAME = "hamidbong/login-service"
         TRIVY_SERVER = "http://192.168.1.20:4954"
     }
-    tools {
-        // Make sure you've configured this tool in Jenkins Global Tool Configuration
-        sonarqubeScanner 'SonarScanner' 
-    }
+    
 
     stages {
 
@@ -41,7 +38,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     sh """
-                        sonarqubeScanner \
+                        SonarScanner \
                         -Dsonar.projectKey=ci-cd-npm-node \
                         -Dsonar.projectName='login-service' \
                         -Dsonar.projectVersion=1.0 \
