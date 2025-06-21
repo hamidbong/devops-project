@@ -43,6 +43,7 @@ pipeline {
             steps {
                 dir('login-service') {
                     sh 'npm test || true'
+                    sh 'npm update cross-spawn'
                 }
             }
         }
@@ -103,6 +104,25 @@ pipeline {
                 sh 'docker volume create --name trivy_javadb_cache || true'
             }
         }
+        //second option de scan trivy sans option socket docker si l'image est deja poussé
+        /*stage('Scan with Trivy') {
+            steps {
+                sh """
+                    docker run --rm \
+                        -v trivy_cache:/root/.cache/trivy \
+                        -v trivy_javadb_cache:/root/.cache/trivy-java-db \
+                        aquasec/trivy:latest \
+                        image \
+                        --exit-code 1 \
+                        --severity CRITICAL,HIGH \
+                        --ignore-unfixed \
+                        --no-progress \
+                        --format table \
+                        --timeout 30m \
+                        ${IMAGE_NAME}:${env.BUILD_ID}
+                """
+            }
+        }*/
 
         stage('Scan with Trivy') {
             steps {
