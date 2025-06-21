@@ -43,8 +43,6 @@ pipeline {
             steps {
                 dir('login-service') {
                     sh 'npm test || true'
-                    sh 'npm update cross-spawn'
-                    sh 'npm install'
                 }
             }
         }
