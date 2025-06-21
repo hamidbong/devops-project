@@ -6,7 +6,7 @@ pipeline {
         SONAR_TOKEN = credentials('sonarqube')
         SONARQUBE = 'sonarqube_devops_master_analyse'
         IMAGE_NAME = "hamidbong/login-service"
-        TRIVY_SERVER = "http://192.168.1.178:4954"
+        TRIVY_SERVER = "http://192.168.1.20:4954"
     }
 
     stages {
@@ -39,7 +39,7 @@ pipeline {
             }*/
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
-                    sh "sonar-scanner -Dsonar.projectKey=ci-cd-node-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}"
+                    sh 'sonar-scanner -Dsonar.projectKey=ci-cd-node-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}'
                 }
             }
         }
@@ -53,7 +53,7 @@ pipeline {
                             sonar-scanner \
                               -Dsonar.projectKey=ci-cd-node-demo \
                               -Dsonar.sources=. \
-                              -Dsonar.host.url=http://192.168.1.178:9000 \
+                              -Dsonar.host.url=http://192.168.1.20:9000 \
                               -Dsonar.login=${SONAR_TOKEN}
                         '''
                     }
