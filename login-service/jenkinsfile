@@ -38,7 +38,7 @@ pipeline {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    sh 'sonar-scanner -Dsonar.projectKey=ci-cd-node-demo -Dsonar.sources=. -Dsonar.login=$SONAR_TOKEN'
+                    sh 'sonar-scanner -Dsonar.projectKey=ci-cd-demo -Dsonar.sources=. -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
