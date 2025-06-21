@@ -36,27 +36,24 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh """
+                withSonarQubeEnv("${SONARQUBE}") {
+                    sh '''
                     sonar-scanner \
-                      -Dsonar.projectKey=ci-cd-npm-node \
-                      -Dsonar.projectName=login-service \
-                      -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=http://192.168.100.151:9000 \
-                      -Dsonar.login=${SONAR_TOKEN} \
-                      -Dsonar.nodejs.executable=$(which node) \
-                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                      -Dsonar.exclusions=**/node_modules/**
-                    """
+                    -Dsonar.projectKey=ci-cd-npm-node \
+                    -Dsonar.projectName=login-service \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=http://192.168.100.151:9000 \
+                    -Dsonar.login=${SONAR_TOKEN} \
+                    -Dsonar.nodejs.executable=$(which node) \
+                    -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                    -Dsonar.exclusions=**/node_modules/**
+                    '''
                 }
             }
         }
 
         /*stage('Sonar Analysis') {
-            environment {
-                SONAR_TOKEN = credentials('sonarqube')
-            }
+           
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     sh 'sonar-scanner -Dsonar.projectKey=ci-cd-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}'
