@@ -32,7 +32,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarQube Analysiss') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     dir('login-service') {
