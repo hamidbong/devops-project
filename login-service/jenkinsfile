@@ -38,11 +38,10 @@ pipeline {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     sh '''
-                    sonar-scanner \
+                    SonarScanner \
                     -Dsonar.projectKey=ci-cd-npm-node \
                     -Dsonar.projectName=login-service \
                     -Dsonar.sources=. \
-                    -Dsonar.host.url=http://192.168.100.151:9000 \
                     -Dsonar.login=${SONAR_TOKEN} \
                     -Dsonar.nodejs.executable=$(which node) \
                     -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
