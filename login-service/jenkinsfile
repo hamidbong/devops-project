@@ -32,7 +32,19 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Sonar Analysis') {
+            environment {
+                SONAR_TOKEN = credentials('sonarqube')
+            }
+            steps {
+                withSonarQubeEnv("${SONARQUBE}") {
+                    sh "sonar-scanner -Dsonar.projectKey=ci-cd-node-demo -Dsonar.sources=. -Dsonar.login=${SONAR_TOKEN}"
+                }
+            }
+        }
+
+
+        /*stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     dir('login-service') {
@@ -46,7 +58,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Quality Gates') {
             steps {
