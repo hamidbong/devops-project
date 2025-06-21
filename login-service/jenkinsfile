@@ -33,16 +33,20 @@ pipeline {
             }
         }
 
-        stage('Sonar Analysis') {
-            
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
-                    tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    sh 'sonar-scanner -Dsonar.projectKey=ci-cd-demo -Dsonar.sources=. -Dsonar.login=$SONAR_TOKEN'
+                    sh "${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectKey=ci-cd-npm-node \
+                        -Dsonar.projectName='login-service' \
+                        -Dsonar.projectVersion=1.0 \
+                        -Dsonar.sources=. \
+                        -Dsonar.java.binaries=target/classes \
+                        -Dsonar.host.url=http://192.168.100.151:9000 \
+                        -Dsonar.login=${SONAR_TOKEN}"
                 }
             }
         }
-
 
         /*stage('Sonar Analysis') {
             environment {
