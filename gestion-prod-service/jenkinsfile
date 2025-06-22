@@ -37,22 +37,20 @@ pipeline {
             steps {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv('sonarqube_devops_master_analyse') {
-                        script {
-                            def nodePath = sh(returnStdout: true, script: 'which node').trim()
-                            
-                            sh """
-                            ${tool('SonarScanner')}/bin/sonar-scanner \
-                            -Dsonar.projectKey=gestion-prod-service \
-                            -Dsonar.projectName='gestion-prod-service' \
-                            -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                            -Dsonar.host.url=${SONAR_HOST_URL} \
-                            -Dsonar.login=$SONAR_TOKEN \
-                            """
-                        }
+                        sh """
+                        ${tool('SonarScanner')}/bin/sonar-scanner \
+                        -Dsonar.projectKey=gestion-prod-service \
+                        -Dsonar.projectName='gestion-prod-service' \
+                        -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                        -Dsonar.sources=src/main/java \
+                        -Dsonar.java.binaries=target/classes \
+                        -Dsonar.login=${SONAR_TOKEN}
+                        """
                     }
                 }
             }
         }
+
         
 
 
