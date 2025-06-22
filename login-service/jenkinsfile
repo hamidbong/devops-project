@@ -121,7 +121,7 @@ pipeline {
                         ${IMAGE_NAME}:${env.BUILD_ID}
                 """
             }
-        }*/
+        }
 
         stage('Scan with Trivy') {
             steps {
@@ -140,7 +140,7 @@ pipeline {
                         ${IMAGE_NAME}:${env.BUILD_ID}
                 """
             }
-        }
+        }*/
 
         stage('Build and Push Docker Image') {
             steps {
