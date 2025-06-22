@@ -48,7 +48,7 @@ pipeline {
             steps {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv('sonarqube_devops_master_analyse') {
-                        sh '''
+                        sh """
                         ${tool('SonarScanner')}/bin/sonar-scanner \
                         -Dsonar.projectKey=gestion-prod-service \
                         -Dsonar.projectName='gestion-prod-service' \
@@ -56,7 +56,7 @@ pipeline {
                         -Dsonar.sources=src/main/java \
                         -Dsonar.java.binaries=target/classes \
                         -Dsonar.login=${SONAR_TOKEN}
-                        '''
+                        """
                     }
                 }
             }
