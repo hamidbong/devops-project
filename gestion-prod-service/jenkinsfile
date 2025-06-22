@@ -37,6 +37,17 @@ pipeline {
             steps {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv('sonarqube_devops_master_analyse') {
+                        sh "mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN}"
+                    }
+                }
+            }
+        }
+
+
+        /*stage('SonarQube Analysis') {
+            steps {
+                dir('gestion-prod-service') {
+                    withSonarQubeEnv('sonarqube_devops_master_analyse') {
                         sh """
                         ${tool('SonarScanner')}/bin/sonar-scanner \
                         -Dsonar.projectKey=gestion-prod-service \
@@ -49,7 +60,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         
 
