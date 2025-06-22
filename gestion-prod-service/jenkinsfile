@@ -35,22 +35,20 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube_devops_master_analyse') {
-                    script {
-                        def nodePath = sh(returnStdout: true, script: 'which node').trim()
-                        
-                        sh """
-                        ${tool('SonarScanner')}/bin/sonar-scanner \
-                          -Dsonar.projectKey=gestion-prod-service \
-                          -Dsonar.projectName='gestion-prod-service' \
-                          -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=${SONAR_HOST_URL} \
-                          -Dsonar.login=$SONAR_TOKEN \
-                          -Dsonar.nodejs.executable=${nodePath} \
-                          -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                          -Dsonar.exclusions=**/node_modules/**
-                        """
+                dir('gestion-prod-service') {
+                    withSonarQubeEnv('sonarqube_devops_master_analyse') {
+                        script {
+                            def nodePath = sh(returnStdout: true, script: 'which node').trim()
+                            
+                            sh """
+                            ${tool('SonarScanner')}/bin/sonar-scanner \
+                            -Dsonar.projectKey=gestion-prod-service \
+                            -Dsonar.projectName='gestion-prod-service' \
+                            -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.login=$SONAR_TOKEN \
+                            """
+                        }
                     }
                 }
             }
