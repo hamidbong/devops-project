@@ -33,7 +33,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        /*stage('SonarQube Analysis') {
             steps {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv('sonarqube_devops_master_analyse') {
@@ -41,10 +41,10 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
 
-        /*stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv('sonarqube_devops_master_analyse') {
@@ -60,9 +60,7 @@ pipeline {
                     }
                 }
             }
-        }*/
-
-        
+        }
 
 
         stage("Quality Gates") {
