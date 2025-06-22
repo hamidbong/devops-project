@@ -9,6 +9,7 @@ pipeline {
 
     environment {
         SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
+        SONAR_TOKEN = credentials('sonarqube-token_gestion-prod-service')
         IMAGE_NAME = "hamidbong/docker-quickstart"
 
         TRIVY_SERVER = "http://192.168.100.32:4954"
@@ -32,16 +33,29 @@ pipeline {
             }
         }
 
-
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    dir('gestion-prod-service') {
-                        sh 'mvn sonar:sonar -Dsonar.projectKey=ci-cd-demo -Dsonar.host.url=http://192.168.100.32:9000 -Dsonar.login=${sonarqube}'
+                withSonarQubeEnv('sonarqube_devops_master_analyse') {
+                    script {
+                        def nodePath = sh(returnStdout: true, script: 'which node').trim()
+                        
+                        sh """
+                        ${tool('SonarScanner')}/bin/sonar-scanner \
+                          -Dsonar.projectKey=gestion-prod-service \
+                          -Dsonar.projectName='gestion-prod-service' \
+                          -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.login=$SONAR_TOKEN \
+                          -Dsonar.nodejs.executable=${nodePath} \
+                          -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                          -Dsonar.exclusions=**/node_modules/**
+                        """
                     }
                 }
             }
         }
+        
 
 
         stage("Quality Gates") {
