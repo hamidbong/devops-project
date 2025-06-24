@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gestion-prod-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gestion-prod-service
+  template:
+    metadata:
+      labels:
+        app: gestion-prod-service
+    spec:
+      containers:
+      - name: gestion-prod-service
+        image: hamidbong/gestion-prod-service:1.0.0
+        ports:
+        - containerPort: 8080
