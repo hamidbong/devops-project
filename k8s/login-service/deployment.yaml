@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: login-service
-          image: hamidbong/login-service:{{BUILD_NUMBER}}
+          image: hamidbong/login-service:69
           ports:
             - containerPort: 3000
           readinessProbe:
