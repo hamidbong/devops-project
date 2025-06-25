@@ -89,6 +89,18 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 dir('login-service') {
+                    timeout(time: 15, unit: 'MINUTES') {
+                        script {
+                            docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                        }
+                    }
+                }
+            }
+        }
+        
+        /*stage('Build Docker Image') {
+            steps {
+                dir('login-service') {
                     script {
                         docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                     }
@@ -141,6 +153,16 @@ pipeline {
             }
         }*/
 
+        /*stage('Build Docker Image') {
+            steps {
+                dir('login-service') {
+                    sh 'npm install --production' // Ensure dependencies are installed
+                    script {
+                        docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                    }
+                }
+            }
+        }*/
 
         stage('Build and Push Docker Image') {
             steps {
