@@ -153,14 +153,13 @@ pipeline {
             }
         }
 
-        stage('Apply Kubernetes Files') {
+        stage('Apply Kubernetes Manifests') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
                     sh """
-                    cat k8s/login-service/deployment.yaml | sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                        cat k8s/login-service/deployment.yaml | sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                        kubectl apply -f k8s/login-service/service.yaml
                     """
-                    sh 'kubectl apply -f k8s/login-service/service.yaml'
-                    //sh 'kubectl apply -f k8s/ingress.yaml'
                 }
             }
         }
@@ -168,10 +167,9 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
-                    sh 'kubectl rollout status deployment/login-service'
+                    sh "kubectl rollout status deployment/login-service --timeout=120s"
                 }
             }
         }
-
     }
 }
