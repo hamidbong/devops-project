@@ -156,7 +156,9 @@ pipeline {
         stage('Apply Kubernetes Files') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
-                    sh 'cat k8s/login-service/deployment.yaml | sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -'
+                    sh """
+                    cat k8s/login-service/deployment.yaml | sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                    """
                     sh 'kubectl apply -f k8s/login-service/service.yaml'
                     //sh 'kubectl apply -f k8s/ingress.yaml'
                 }
