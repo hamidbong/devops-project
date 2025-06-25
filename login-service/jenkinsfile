@@ -141,13 +141,17 @@ pipeline {
             }
         }*/
 
+
         stage('Build and Push Docker Image') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
-                        def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "./login-service")
-                        image.push()
-                        //image.push('latest')
+                dir('login-service') {
+                    script {
+                        docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
+                            sh 'npm install --production'
+                            def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "./login-service")
+                            image.push()
+                            //image.push('latest')
+                        }
                     }
                 }
             }

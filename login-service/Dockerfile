@@ -1,20 +1,16 @@
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
 
-# Copy package files first for better layer caching
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Install production dependencies only (now includes dotenv)
-RUN npm ci --only=production
+# Install dependencies
+RUN npm install
 
-# Copy the rest of the application files
+# Copy application files
 COPY . .
 
-# Environment variables should come from Kubernetes, not .env file
-# If you must use .env in development, add it to .dockerignore
-# and use Kubernetes secrets in production
-
+# Expose port and run application
 EXPOSE 3000
-
 CMD ["node", "app.js"]
