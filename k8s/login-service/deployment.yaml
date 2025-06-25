@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: login-service
-        image: hamidbong/login-service:1.0.0
+        image: hamidbong/login-service:{{BUILD_NUMBER}}
         ports:
         - containerPort: 3000
