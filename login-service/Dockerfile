@@ -1,19 +1,20 @@
 FROM node:18-alpine
 
-# Dossier de travail dans le container
 WORKDIR /app
 
-# Copie des dépendances
+# Copy package files first for better layer caching
 COPY package*.json ./
 
-# Installation des dépendances en production
+# Install production dependencies only (now includes dotenv)
 RUN npm ci --only=production
 
-# Copie du reste des fichiers
+# Copy the rest of the application files
 COPY . .
 
-# Exposition du port (par exemple 3000 si ton app écoute sur 3000)
+# Environment variables should come from Kubernetes, not .env file
+# If you must use .env in development, add it to .dockerignore
+# and use Kubernetes secrets in production
+
 EXPOSE 3000
 
-# Commande de démarrage
 CMD ["node", "app.js"]
