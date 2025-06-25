@@ -168,7 +168,7 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
-                    sh 'kubectl rollout status login-service'
+                    sh 'kubectl rollout status deployment/login-service'
                 }
             }
         }
