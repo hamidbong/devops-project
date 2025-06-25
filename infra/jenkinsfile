@@ -33,6 +33,9 @@ pipeline {
             }
         }
 
+        \
+                          -Dsonar.exclusions=**/node_modules/**
+
         stage('Apply Kubernetes Files') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
