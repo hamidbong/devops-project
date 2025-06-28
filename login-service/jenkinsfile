@@ -114,7 +114,7 @@ pipeline {
                 sh 'docker volume create --name trivy_javadb_cache || true'
             }
         }
-        //second option de scan trivy sans option socket docker si l'image est deja poussé
+        ///second option de scan trivy sans option socket docker si l'image est deja poussé
         /*stage('Scan with Trivy') {
             steps {
                 sh """
