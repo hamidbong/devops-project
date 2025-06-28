@@ -91,7 +91,7 @@ pipeline {
                 dir('login-service') {
                     timeout(time: 15, unit: 'MINUTES') {
                         script {
-                            docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                            dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                         }
                     }
                 }
@@ -153,18 +153,19 @@ pipeline {
             }
         }*/
 
-        /*stage('Build Docker Image') {
+        stage('Push Docker Image') {
             steps {
-                dir('login-service') {
-                    sh 'npm install --production' // Ensure dependencies are installed
-                    script {
-                        docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
+                        dockerImage.push()
+                        // Optionally push as 'latest'
+                        //dockerImage.push('latest')
                     }
                 }
             }
-        }*/
+        }
 
-        stage('Build and Push Docker Image') {
+        /*stage('Build and Push Docker Image') {
             steps {
                 dir('login-service') {
                     script {
@@ -177,7 +178,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Apply Kubernetes Files') {
             steps {
