@@ -169,7 +169,7 @@ pipeline {
                 dir('login-service') {
                     script {
                         docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
-                            sh 'npm install --production'
+                            sh 'npm install'
                             def image = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                             image.push()
                             //image.push('latest')
