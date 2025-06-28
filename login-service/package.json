@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "dotenv": "^16.0.0",
-    "mongoose": "^7.x"
+    "mongoose": "^X.Y.Z",
+    "dotenv": "^16.0.0"
   }
 }
