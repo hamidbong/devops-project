@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Bundle app source
+# Bundle app sourcee
 COPY . .
 
 # Expose correct port
