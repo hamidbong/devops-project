@@ -18,5 +18,11 @@ mongoose.connect(process.env.MONGO_URI)
 // Routes
 app.use('/api/auth', authRoutes);
 
+// Endpoint de santé
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Démarrer serveur
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Serveur démarréeeeeee sur le port ${PORT}`));
+app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));
