@@ -4,7 +4,7 @@ metadata:
   name: login-service
 spec:
   selector:
-    app: login-service
+    app: login-deployment
   ports:
     - protocol: TCP
       port: 80

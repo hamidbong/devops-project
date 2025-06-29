@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: login-service
+  name: login-deployment
   labels:
-    app: login-service
+    app: login-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: login-service
+      app: login-deployment
   template:
     metadata:
       labels:
-        app: login-service
+        app: login-deployment
     spec:
       containers:
-        - name: login-service
+        - name: login-container
           image: hamidbong/login-service:{{BUILD_NUMBER}}
           ports:
             - containerPort: 5000
