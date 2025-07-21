@@ -86,8 +86,8 @@ pipeline {
                         -v $(pwd)/../dependency-check-report:/report \
                         owasp/dependency-check \
                         --project "login-service" \
-                        --scan /src \
-                        --format "HTML,JSON" \
+                        --scan /src \ 
+                        -f HTML -f JSON \
                         --out /report \
                         --nvdApiKey ${NVD_API_KEY} \
                         --log /report/depcheck.log || true
