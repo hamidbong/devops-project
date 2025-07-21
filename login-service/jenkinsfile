@@ -79,13 +79,15 @@ pipeline {
                         owasp/dependency-check \
                         --project "login-service" \
                         --scan /src \
-                        --format "HTML" \
+                        --format "HTML,JSON" \
                         --out /report \
-                        --nvdApiKey ${NVD_API_KEY}
+                        --nvdApiKey ${NVD_API_KEY} \
+                        --log /report/depcheck.log || true
                     '''
                 }
             }
         }
+
 
 
 
