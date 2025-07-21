@@ -40,6 +40,14 @@ pipeline {
             }
         }
 
+        stage('Install dependencies for package-lock') {
+            steps {
+                dir('login-service') {
+                    sh 'npm install --package-lock-only'
+                }
+            }
+        }
+
         stage('Run Tests') {
             steps {
                 dir('login-service') {
