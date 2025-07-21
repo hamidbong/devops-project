@@ -65,7 +65,7 @@ pipeline {
                 }
             }
         }*/
-        
+
         stage('OWASP Dependency Check') {
             steps {
                 dir('login-service') {
@@ -76,16 +76,17 @@ pipeline {
                         -v owasp_depcheck_data:/usr/share/dependency-check/data \
                         -v $(pwd):/src \
                         -v $(pwd)/../dependency-check-report:/report \
-                        -e NVD_API_KEY=${NVD_API_KEY} \
                         owasp/dependency-check \
                         --project "login-service" \
                         --scan /src \
                         --format "HTML" \
-                        --out /report
+                        --out /report \
+                        --nvdApiKey ${NVD_API_KEY}
                     '''
                 }
             }
         }
+
 
 
         stage('Archive Dependency Report') {
