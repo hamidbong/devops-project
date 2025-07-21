@@ -47,7 +47,30 @@ pipeline {
             }
         }
 
-        
+        stage('OWASP Dependency Check') {
+            steps {
+                dir('login-service') {
+                    sh '''
+                    mkdir -p ../dependency-check-report
+                    docker run --rm \
+                        -v $(pwd):/src \
+                        -v $(pwd)/../dependency-check-report:/report \
+                        owasp/dependency-check \
+                        --project "login-service" \
+                        --scan /src \
+                        --format "HTML" \
+                        --out /report
+                    '''
+                }
+            }
+        }
+
+        stage('Archive Dependency Report') {
+            steps {
+                archiveArtifacts artifacts: 'dependency-check-report/dependency-check-report.html', allowEmptyArchive: true
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube_devops_master_analyse') {
