@@ -8,6 +8,7 @@ pipeline {
     environment {
         SONAR_TOKEN = credentials('sonarqube_token-login')
         SONARQUBE = 'sonarqube_devops_master_analyse'
+        NVD_API_KEY = credentials('nvd-api-key')
         IMAGE_NAME = "hamidbong/login-service"
         TRIVY_SERVER = "http://192.168.100.151:4954"
     }
@@ -47,7 +48,7 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency Check') {
+        /*stage('OWASP Dependency Check') {
             steps {
                 dir('login-service') {
                     sh '''
@@ -63,7 +64,29 @@ pipeline {
                     '''
                 }
             }
+        }*/
+        
+        stage('OWASP Dependency Check') {
+            steps {
+                dir('login-service') {
+                    sh '''
+                    mkdir -p ../dependency-check-report
+                    docker volume create owasp_depcheck_data || true
+                    docker run --rm \
+                        -v owasp_depcheck_data:/usr/share/dependency-check/data \
+                        -v $(pwd):/src \
+                        -v $(pwd)/../dependency-check-report:/report \
+                        -e NVD_API_KEY=${NVD_API_KEY} \
+                        owasp/dependency-check \
+                        --project "login-service" \
+                        --scan /src \
+                        --format "HTML" \
+                        --out /report
+                    '''
+                }
+            }
         }
+
 
         stage('Archive Dependency Report') {
             steps {
