@@ -79,16 +79,18 @@ pipeline {
                 }
             }
         }*/
-
-       stage('OWASP Dependency Check') {
+        
+        stage('OWASP Dependency Check') {
             steps {
-                dependencyCheck additionalArguments: '''--scan login-service \
-                    --project "login-service" \
-                    --format HTML \
-                    --out dependency-check-report \
-                    --nvdApiKey ${NVD_API_KEY}'''
+                dependencyCheck odcInstallation: 'DependencyCheck', // le nom que tu as mis dans Jenkins
+                    additionalArguments: '''--scan login-service \
+                        --project "login-service" \
+                        --format HTML \
+                        --out dependency-check-report \
+                        --nvdApiKey ${NVD_API_KEY}'''
             }
         }
+
 
         stage('Archive Dependency Report') {
             steps {
