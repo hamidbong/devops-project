@@ -84,6 +84,30 @@ pipeline {
                         -v owasp_depcheck_data:/usr/share/dependency-check/data \
                         -v $(pwd):/src \
                         -v $(pwd)/../dependency-check-report:/report \
+                        owasp/dependency-check:latest \
+                        --project "login-service" \
+                        --scan /src \
+                        --format "ALL" \
+                        --out /report \
+                        --nvdApiKey ${NVD_API_KEY} \
+                        --log /report/depcheck.log \
+                        --disableNodeAudit \
+                        --disableNodeJS || true
+                    '''
+                }
+            }
+        }
+
+        /*stage('OWASP Dependency Check') {
+            steps {
+                dir('login-service') {
+                    sh '''
+                    mkdir -p ../dependency-check-report
+                    docker volume create owasp_depcheck_data || true
+                    docker run --rm \
+                        -v owasp_depcheck_data:/usr/share/dependency-check/data \
+                        -v $(pwd):/src \
+                        -v $(pwd)/../dependency-check-report:/report \
                         owasp/dependency-check \
                         --project "login-service" \
                         --scan /src \
@@ -94,7 +118,7 @@ pipeline {
                     '''
                 }
             }
-        }
+        }*/
 
 
 
