@@ -85,12 +85,12 @@ pipeline {
                     docker run --rm \
                         -v $(pwd):/src \
                         -v $(pwd)/../dependency-check-report:/report \
-                        --nvdApiKey ${NVD_API_KEY} \
                         owasp/dependency-check:latest \
                         --project "login-service" \
                         --scan /src \
                         --format "HTML" \
                         --out /report \
+                        --nvdApiKey ${NVD_API_KEY} \
                         --enableExperimental \
                         --disableYarnAudit \
                         --nodeAuditSkipDevDependencies \
