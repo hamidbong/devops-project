@@ -108,11 +108,15 @@ pipeline {
                             -o './'
                             -s './'
                             -f 'ALL' 
-                            --prettyPrint''', odcInstallation: 'DependencyCheck'
-                
+                            --prettyPrint''', 
+                    odcInstallation: 'DependencyCheck'
+
                 dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+
+                archiveArtifacts artifacts: 'dependency-check-report.*', allowEmptyArchive: true
             }
         }
+
 
 
 
