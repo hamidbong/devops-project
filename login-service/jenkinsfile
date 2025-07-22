@@ -19,10 +19,10 @@ pipeline {
 
         stage('Install & Test') {
             parallel {
-                stage('Install Dependencies') {
+                stage('Install dependencies') {
                     steps {
                         dir('login-service') {
-                            sh 'npm install'
+                            sh 'npm ci --no-audit'
                         }
                     }
                 }
@@ -158,6 +158,18 @@ pipeline {
                             dockerImage.push('latest')
                         }
                     }
+                }
+            }
+        }
+        stage('Cleanup Docker') {
+            steps {
+                script {
+                    // Supprime l'image locale après le push
+                    sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
+                    sh "docker rmi ${IMAGE_NAME}:latest || true"
+                    
+                    // Optionnel : Nettoyage des images "<none>" (dangling)
+                    sh "docker image prune -f || true"
                 }
             }
         }
