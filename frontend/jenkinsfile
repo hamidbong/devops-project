@@ -175,7 +175,7 @@ pipeline {
                     sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
                     sh "docker rmi ${IMAGE_NAME}:latest || true"
                     
-                    // Optionnel : Nettoyage des images "<none>" (dangling)
+                    // Optionnel : nnnNettoyage des images "<none>" (dangling)
                     sh "docker image prune -f || true"
                 }
             }
