@@ -19,27 +19,18 @@ pipeline {
 
         stage('Install & Test') {
             parallel {
-                stage('Install dependencies') {
+                stage('Install & Generate Lock') {
                     steps {
                         dir('login-service') {
                             sh 'npm ci --no-audit'
+                            sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
                         }
                     }
                 }
-
-                stage('Generate Lock File') {
+                stage('Run Tests') {
                     steps {
                         dir('login-service') {
-                            sh 'rm -f package-lock.json'
-                            sh 'npm install --package-lock-only --no-audit'
-                        }
-                    }
-                }
-
-                stage('Run Tests with Coverage') {
-                    steps {
-                        dir('login-service') {
-                            sh 'npm run test -- --coverage || true'
+                            sh 'npm test -- --coverage'
                         }
                     }
                 }
@@ -91,6 +82,17 @@ pipeline {
                     timeout(time: 1, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
+                }
+            }
+        }
+        stage('Trivy Filesystem Scan') {
+            steps {
+                dir('login-service') {
+                    sh '''
+                        docker run --rm \
+                            -v $(pwd):/scan \
+                            aquasec/trivy fs --security-checks vuln,config /scan
+                    '''
                 }
             }
         }
@@ -147,6 +149,11 @@ pipeline {
                 }
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
             }
+            post {
+                failure {
+                    error "❌ Trivy found CRITICAL/HIGH vulnerabilities!"
+                }
+            }
         }
 
         stage('Push Docker Image') {
@@ -190,7 +197,8 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
-                    sh 'kubectl rollout status deployment/login-deployment'
+                    sh 'kubectl rollout status deployment/login-deployment --timeout=300s'
+                    sh 'kubectl wait --for=condition=ready pod -l app=login-service --timeout=300s'
                 }
             }
         }

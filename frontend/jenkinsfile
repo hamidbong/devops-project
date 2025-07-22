@@ -1,0 +1,221 @@
+pipeline {
+
+    agent any
+
+    environment {
+        SONAR_TOKEN   = credentials('sonarqube_token-login')
+        SONARQUBE     = 'sonarqube_devops_master_analyse'
+        NVD_API_KEY   = credentials('nvd-api-key')
+        IMAGE_NAME    = "hamidbong/frontend"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install & Test') {
+            parallel {
+                stage('Install & Generate Lock') {
+                    steps {
+                        dir('frontend') {
+                            sh 'npm ci --no-audit'
+                            sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
+                        }
+                    }
+                }
+                stage('Run Tests') {
+                    steps {
+                        dir('frontend') {
+                            sh 'npm test -- --coverage'
+                        }
+                    }
+                }
+            }
+        }
+        
+
+        stage('OWASP Dependency-Check') {
+            steps {
+                dependencyCheck additionalArguments: ''' 
+                            -o './dependency-check-report' 
+                            -s './' 
+                            -f 'ALL' 
+                            --prettyPrint 
+                            --nvdApiKey ${NVD_API_KEY}''', 
+                    odcInstallation: 'DependencyCheck'
+
+                dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                    failedTotalCritical: 1,
+                    unstableTotalHigh: 1
+
+                archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE}") {
+                    script {
+                        def nodePath = sh(returnStdout: true, script: 'which node').trim()
+                        sh """
+                            ${tool('SonarScanner')}/bin/sonar-scanner \
+                                -Dsonar.projectKey=ci-cd-npm-node \
+                                -Dsonar.projectName=frontend \
+                                -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                -Dsonar.sources=frontend \
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.nodejs.executable=${nodePath} \
+                                -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                retry(3) {
+                    timeout(time: 1, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
+            }
+        }
+        stage('Trivy Filesystem Scan') {
+            steps {
+                dir('frontend') {
+                    sh '''
+                        docker run --rm \
+                            -v $(pwd):/scan \
+                            aquasec/trivy fs --security-checks vuln,config /scan
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Access Test') {
+            steps {
+                sh 'docker version'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('frontend') {
+                    timeout(time: 15, unit: 'MINUTES') {
+                        script {
+                            dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Setup Trivy Caches') {
+            steps {
+                sh 'docker volume create --name trivy_cache || true'
+                sh 'docker volume create --name trivy_javadb_cache || true'
+            }
+        }
+
+        stage('Scan with Trivy') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                            docker run --rm \
+                                -v /var/run/docker.sock:/var/run/docker.sock \
+                                -v trivy_cache:/root/.cache/trivy \
+                                -v trivy_javadb_cache:/root/.cache/trivy-java-db \
+                                -e TRIVY_TIMEOUT=30m \
+                                -v $(pwd):/project \
+                                aquasec/trivy:latest \
+                                image ${IMAGE_NAME}:${BUILD_ID} \
+                                --exit-code 1 \
+                                --severity CRITICAL,HIGH \
+                                --ignore-unfixed \
+                                --timeout 30m \
+                                --format json \
+                                --output /project/trivy-report.json
+                        '''
+
+                    } catch (err) {
+                        error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
+                    }
+                }
+                archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
+            }
+            post {
+                failure {
+                    error "❌ Trivy found CRITICAL/HIGH vulnerabilities!"
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                dir('frontend') {
+                    script {
+                        docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
+                            dockerImage.push()
+                            dockerImage.push('latest')
+                        }
+                    }
+                }
+            }
+        }
+        stage('Cleanup Docker') {
+            steps {
+                script {
+                    // Supprime l'image locale après le push
+                    sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
+                    sh "docker rmi ${IMAGE_NAME}:latest || true"
+                    
+                    // Optionnel : Nettoyage des images "<none>" (dangling)
+                    sh "docker image prune -f || true"
+                }
+            }
+        }
+
+        stage('Apply Kubernetes Files') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+                    sh """
+                        cat k8s/frontend/deployment.yaml | \
+                        sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                        kubectl apply -f k8s/frontend/service.yaml
+                        # kubectl apply -f k8s/ingress.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+                    sh 'kubectl rollout status deployment/login-deployment --timeout=300s'
+                    sh 'kubectl wait --for=condition=ready pod -l app=frontend --timeout=300s'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo "🧾 Pipeline completed on build #${env.BUILD_NUMBER}"
+                archiveArtifacts artifacts: 'frontend/coverage/**', allowEmptyArchive: true
+            }
+        }
+        success {
+            echo '✅ Build succeeded!'
+        }
+        failure {
+            echo '❌ Build failed!'
+        }
+    }
+}
