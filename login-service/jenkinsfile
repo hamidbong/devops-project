@@ -12,6 +12,9 @@ pipeline {
         IMAGE_NAME = "hamidbong/login-service"
         TRIVY_SERVER = "http://192.168.100.151:4954"
     }
+    tools {
+        dependencyCheck 'DependencyCheck'
+    }
     
 
     stages {
@@ -77,50 +80,15 @@ pipeline {
             }
         }*/
 
-        stage('OWASP Dependency Check') {
+       stage('OWASP Dependency Check') {
             steps {
-                dir('login-service') {
-                    sh '''
-                    mkdir -p ../dependency-check-report
-                    docker run --rm \
-                        -v $(pwd):/src \
-                        -v $(pwd)/../dependency-check-report:/report \
-                        owasp/dependency-check:latest \
-                        --project "login-service" \
-                        --scan /src \
-                        --format "HTML" \
-                        --out /report \
-                        --nvdApiKey ${NVD_API_KEY} \
-                        --enableExperimental \
-                        --disableYarnAudit \
-                        --nodeAuditSkipDevDependencies \
-                        --log /report/depcheck.log || true
-                    '''
-                }
+                dependencyCheck additionalArguments: '''--scan login-service \
+                    --project "login-service" \
+                    --format HTML \
+                    --out dependency-check-report \
+                    --nvdApiKey ${NVD_API_KEY}'''
             }
         }
-
-        /*stage('OWASP Dependency Check') {
-            steps {
-                dir('login-service') {
-                    sh '''
-                    mkdir -p ../dependency-check-report
-                    docker volume create owasp_depcheck_data || true
-                    docker run --rm \
-                        -v owasp_depcheck_data:/usr/share/dependency-check/data \
-                        -v $(pwd):/src \
-                        -v $(pwd)/../dependency-check-report:/report \
-                        owasp/dependency-check \
-                        --project "login-service" \
-                        --scan /src \
-                        -f JSON \
-                        --out /report \
-                        --nvdApiKey ${NVD_API_KEY} \
-                        --log /report/depcheck.log || true
-                    '''
-                }
-            }
-        }*/
 
         stage('Archive Dependency Report') {
             steps {
