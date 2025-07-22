@@ -124,7 +124,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh """
+                        sh '''
                             docker run --rm \
                                 -v /var/run/docker.sock:/var/run/docker.sock \
                                 -v trivy_cache:/root/.cache/trivy \
@@ -132,14 +132,15 @@ pipeline {
                                 -e TRIVY_TIMEOUT=30m \
                                 -v $(pwd):/project \
                                 aquasec/trivy:latest \
-                                image ${IMAGE_NAME}:${env.BUILD_ID} \
+                                image ${IMAGE_NAME}:${BUILD_ID} \
                                 --exit-code 1 \
                                 --severity CRITICAL,HIGH \
                                 --ignore-unfixed \
                                 --timeout 30m \
                                 --format json \
                                 --output /project/trivy-report.json
-                        """
+                        '''
+
                     } catch (err) {
                         error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
                     }
