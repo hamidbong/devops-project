@@ -85,7 +85,7 @@ pipeline {
                     docker run --rm \
                         -v $(pwd):/src \
                         -v $(pwd)/../dependency-check-report:/report \
-                        -e NVD_API_KEY=${NVD_API_KEY} \
+                        --nvdApiKey ${NVD_API_KEY} \
                         owasp/dependency-check:latest \
                         --project "login-service" \
                         --scan /src \
