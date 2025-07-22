@@ -70,17 +70,16 @@ pipeline {
                 withSonarQubeEnv("${SONARQUBE}") {
                     script {
                         def nodePath = sh(returnStdout: true, script: 'which node').trim()
-                        sh '''
+                        sh """
                             ${tool('SonarScanner')}/bin/sonar-scanner \
                                 -Dsonar.projectKey=ci-cd-npm-node \
                                 -Dsonar.projectName=login-service \
                                 -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                 -Dsonar.sources=login-service \
-                                -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.login=${SONAR_TOKEN} \
                                 -Dsonar.nodejs.executable=${nodePath} \
                                 -Dsonar.javascript.lcov.reportPaths=login-service/coverage/lcov.info
-                        '''
+                        """
                     }
                 }
             }
