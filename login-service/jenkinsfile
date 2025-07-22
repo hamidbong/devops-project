@@ -21,6 +21,13 @@ pipeline {
                 checkout scm
             }
         }
+
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+                sh 'docker system prune -f || true'
+            }
+        }
         
         stage('Verify Node.js') {
             steps {
@@ -79,20 +86,19 @@ pipeline {
                 dir('login-service') {
                     sh '''
                     mkdir -p ../dependency-check-report
-                    docker volume create owasp_depcheck_data || true
                     docker run --rm \
-                        -v owasp_depcheck_data:/usr/share/dependency-check/data \
                         -v $(pwd):/src \
                         -v $(pwd)/../dependency-check-report:/report \
+                        -e NVD_API_KEY=${NVD_API_KEY} \
                         owasp/dependency-check:latest \
                         --project "login-service" \
                         --scan /src \
-                        --format "ALL" \
+                        --format "HTML" \
                         --out /report \
-                        --nvdApiKey ${NVD_API_KEY} \
-                        --log /report/depcheck.log \
-                        --disableNodeAudit \
-                        --disableNodeJS || true
+                        --enableExperimental \
+                        --disableYarnAudit \
+                        --nodeAuditSkipDevDependencies \
+                        --log /report/depcheck.log || true
                     '''
                 }
             }
@@ -120,14 +126,20 @@ pipeline {
             }
         }*/
 
-
-
-
         stage('Archive Dependency Report') {
+            steps {
+                archiveArtifacts artifacts: 'dependency-check-report/*', allowEmptyArchive: true
+            }
+        }
+
+
+
+
+        /*stage('Archive Dependency Report') {
             steps {
                 archiveArtifacts artifacts: 'dependency-check-report/dependency-check-report.html', allowEmptyArchive: true
             }
-        }
+        }*/
 
         stage('SonarQube Analysis') {
             steps {
@@ -263,5 +275,16 @@ pipeline {
             }
         }
 
+    }
+}
+
+
+post {
+    always {
+        script {
+            // Capture and log dependency check results
+            def depCheckLog = readFile(file: 'dependency-check-report/depcheck.log')
+            echo "Dependency Check Log:\n${depCheckLog}"
+        }
     }
 }
