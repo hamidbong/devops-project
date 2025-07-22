@@ -2,18 +2,13 @@ pipeline {
 
     agent any
 
-   
-
-
     environment {
-        SONAR_TOKEN = credentials('sonarqube_token-login')
-        SONARQUBE = 'sonarqube_devops_master_analyse'
-        NVD_API_KEY = credentials('nvd-api-key')
-        IMAGE_NAME = "hamidbong/login-service"
-        TRIVY_SERVER = "http://192.168.100.151:4954"
+        SONAR_TOKEN   = credentials('sonarqube_token-login')
+        SONARQUBE     = 'sonarqube_devops_master_analyse'
+        NVD_API_KEY   = credentials('nvd-api-key')
+        IMAGE_NAME    = "hamidbong/login-service"
+        TRIVY_SERVER  = "http://192.168.100.218:4954"
     }
-    
-    
 
     stages {
 
@@ -23,84 +18,75 @@ pipeline {
             }
         }
 
-        
-        
-        stage('Verify Node.js') {
-            steps {
-                sh '''
-                node --version
-                npm --version
-                which node
-                '''
-            }
-        }
+        stage('Install & Test') {
+            parallel {
+                stage('Install Dependencies') {
+                    steps {
+                        dir('login-service') {
+                            sh 'npm install'
+                        }
+                    }
+                }
 
-        stage('Install dependencies') {
-            steps {
-                dir('login-service') {
-                    sh 'npm install'
+                stage('Generate Lock File') {
+                    steps {
+                        dir('login-service') {
+                            sh 'rm -f package-lock.json'
+                            sh 'npm install --package-lock-only --no-audit'
+                        }
+                    }
+                }
+
+                stage('Run Tests with Coverage') {
+                    steps {
+                        dir('login-service') {
+                            sh 'npm run test -- --coverage || true'
+                        }
+                    }
                 }
             }
         }
 
-        stage('Install dependencies for package-lock') {
+        stage('OWASP Dependency-Check') {
             steps {
-                dir('login-service') {
-                    sh 'rm -f package-lock.json' // Clean up existing lock file
-                    sh 'npm install --package-lock-only --no-audit' // Generate fresh lock file
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                dir('login-service') {
-                    sh 'npm test || true'
-                }
-            }
-        }
-
-        stage('OWASP Dependency-Check Vulnerabilities') {
-            steps {
-                dependencyCheck additionalArguments: ''' 
-                            -o './'
-                            -s './'
+                dependencyCheck additionalArguments: """ 
+                            -o './dependency-check-report' 
+                            -s './' 
                             -f 'ALL' 
                             --prettyPrint 
-                            --nvdApiKey ${NVD_API_KEY}''', 
+                            --nvdApiKey ${NVD_API_KEY}""", 
                     odcInstallation: 'DependencyCheck'
 
-                dependencyCheckPublisher pattern: 'dependency-check-report.xml',
-                    failedTotalCritical: 1, // Fail the build if 1+ critical vuln found
-                    unstableTotalHigh: 1    // Mark unstable if 1+ high vuln found
+                dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                    failedTotalCritical: 1,
+                    unstableTotalHigh: 1
 
-                archiveArtifacts artifacts: 'dependency-check-report.*', allowEmptyArchive: true
+                archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube_devops_master_analyse') {
+                withSonarQubeEnv("${SONARQUBE}") {
                     script {
                         def nodePath = sh(returnStdout: true, script: 'which node').trim()
-                        
                         sh """
-                        ${tool('SonarScanner')}/bin/sonar-scanner \
-                          -Dsonar.projectKey=ci-cd-npm-node \
-                          -Dsonar.projectName=login-service \
-                          -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=${SONAR_HOST_URL} \
-                          -Dsonar.login=$SONAR_TOKEN \
-                          -Dsonar.nodejs.executable=${nodePath} \
-                          -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                            ${tool('SonarScanner')}/bin/sonar-scanner \
+                                -Dsonar.projectKey=ci-cd-npm-node \
+                                -Dsonar.projectName=login-service \
+                                -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                -Dsonar.sources=login-service \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.nodejs.executable=${nodePath} \
+                                -Dsonar.javascript.lcov.reportPaths=login-service/coverage/lcov.info
                         """
                     }
                 }
             }
         }
 
-        stage('Quality Gates') {
+        stage('Quality Gate') {
             steps {
                 retry(3) {
                     timeout(time: 1, unit: 'MINUTES') {
@@ -128,51 +114,38 @@ pipeline {
             }
         }
 
-        
-
-        stage('Setup Caches') {
+        stage('Setup Trivy Caches') {
             steps {
                 sh 'docker volume create --name trivy_cache || true'
                 sh 'docker volume create --name trivy_javadb_cache || true'
             }
         }
-        ////second option
-        //  de scan trivy sans option socket docker si l'image est deja poussé
-        /*stage('Scan with Trivy') {
-            steps {
-                sh """
-                    docker run --rm \
-                        -v trivy_cache:/root/.cache/trivy \
-                        -v trivy_javadb_cache:/root/.cache/trivy-java-db \
-                        aquasec/trivy:latest \
-                        image \
-                        --exit-code 1 \
-                        --severity CRITICAL,HIGH \
-                        --ignore-unfixed \
-                        --no-progress \
-                        --format table \
-                        --timeout 30m \
-                        ${IMAGE_NAME}:${env.BUILD_ID}
-                """
-            }
-        }*/
 
         stage('Scan with Trivy') {
             steps {
-                sh """
-                    docker run --rm \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        -v trivy_cache:/root/.cache/trivy \
-                        -v trivy_javadb_cache:/root/.cache/trivy-java-db \
-                        -e TRIVY_TIMEOUT=30m \
-                        aquasec/trivy:latest \
-                        image \
-                        --exit-code 1 \
-                        --severity CRITICAL,HIGH \
-                        --ignore-unfixed \
-                        --timeout 30m \
-                        ${IMAGE_NAME}:${env.BUILD_ID}
-                """
+                script {
+                    try {
+                        sh """
+                            docker run --rm \
+                                -v /var/run/docker.sock:/var/run/docker.sock \
+                                -v trivy_cache:/root/.cache/trivy \
+                                -v trivy_javadb_cache:/root/.cache/trivy-java-db \
+                                -e TRIVY_TIMEOUT=30m \
+                                -v $(pwd):/project \
+                                aquasec/trivy:latest \
+                                image ${IMAGE_NAME}:${env.BUILD_ID} \
+                                --exit-code 1 \
+                                --severity CRITICAL,HIGH \
+                                --ignore-unfixed \
+                                --timeout 30m \
+                                --format json \
+                                --output /project/trivy-report.json
+                        """
+                    } catch (err) {
+                        error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
+                    }
+                }
+                archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
             }
         }
 
@@ -182,24 +155,22 @@ pipeline {
                     script {
                         docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
                             dockerImage.push()
-                            // Optionally push as 'latest'
-                            //dockerImage.push('latest')
+                            dockerImage.push('latest')
                         }
                     }
                 }
             }
         }
 
-        
-
         stage('Apply Kubernetes Files') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
                     sh """
-                    cat k8s/login-service/deployment.yaml | sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                        cat k8s/login-service/deployment.yaml | \
+                        sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                        kubectl apply -f k8s/login-service/service.yaml
+                        # kubectl apply -f k8s/ingress.yaml
                     """
-                    sh 'kubectl apply -f k8s/login-service/service.yaml'
-                    //sh 'kubectl apply -f k8s/ingress.yaml'
                 }
             }
         }
@@ -211,17 +182,20 @@ pipeline {
                 }
             }
         }
-
     }
-}
 
-
-post {
-    always {
-        script {
-            // Capture and log dependency check results
-            def depCheckLog = readFile(file: 'dependency-check-report/depcheck.log')
-            echo "Dependency Check Log:\n${depCheckLog}"
+    post {
+        always {
+            script {
+                echo "🧾 Pipeline completed on build #${env.BUILD_NUMBER}"
+                archiveArtifacts artifacts: 'login-service/coverage/**', allowEmptyArchive: true
+            }
+        }
+        success {
+            echo '✅ Build succeeded!'
+        }
+        failure {
+            echo '❌ Build failed!'
         }
     }
 }
