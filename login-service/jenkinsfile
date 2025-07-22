@@ -50,7 +50,8 @@ pipeline {
         stage('Install dependencies for package-lock') {
             steps {
                 dir('login-service') {
-                    sh 'npm install --package-lock-only'
+                    sh 'rm -f package-lock.json' // Clean up existing lock file
+                    sh 'npm install --package-lock-only --no-audit' // Generate fresh lock file
                 }
             }
         }
