@@ -78,23 +78,7 @@ pipeline {
             }
         }
 
-        /*stage('OWASP Dependency-Check Vulnerabilities') {
-            steps {
-                dependencyCheck additionalArguments: ''' 
-                            -o './'
-                            -s './'
-                            -f 'ALL' 
-                            --prettyPrint
-                            --nvdApiKey ${NVD_API_KEY}''', 
-                    odcInstallation: 'DependencyCheck'
-
-                dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-
-                archiveArtifacts artifacts: 'dependency-check-report.*', allowEmptyArchive: true
-            }
-        }*/
-
-        /*stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube_devops_master_analyse') {
                     script {
@@ -124,7 +108,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
 
         stage('Docker Access Test') {
             steps {
@@ -132,7 +116,7 @@ pipeline {
             }
         }
 
-        /*stage('Build Docker Image') {
+        stage('Build Docker Image') {
             steps {
                 dir('login-service') {
                     timeout(time: 15, unit: 'MINUTES') {
@@ -173,7 +157,7 @@ pipeline {
             }
         }*/
 
-        /*stage('Scan with Trivy') {
+        stage('Scan with Trivy') {
             steps {
                 sh """
                     docker run --rm \
@@ -226,7 +210,7 @@ pipeline {
                     sh 'kubectl rollout status deployment/login-deployment'
                 }
             }
-        }*/
+        }
 
     }
 }
