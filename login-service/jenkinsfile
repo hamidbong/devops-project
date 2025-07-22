@@ -22,12 +22,7 @@ pipeline {
             }
         }
 
-        stage('Clean Workspace') {
-            steps {
-                cleanWs()
-                sh 'docker system prune -f || true'
-            }
-        }
+        
         
         stage('Verify Node.js') {
             steps {
