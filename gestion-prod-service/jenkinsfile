@@ -43,7 +43,7 @@ pipeline {
                             script {
                                 sh """
                                     ${tool('SonarScanner')}/bin/sonar-scanner \
-                                        -Dsonar.projectKey=ci-cd-mvn-gestion-prod \
+                                        -Dsonar.projectKey=gestion-prod-service \
                                         -Dsonar.projectName=${SERVICE_NAME} \
                                         -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                         -Dsonar.login=${SONAR_TOKEN} \
