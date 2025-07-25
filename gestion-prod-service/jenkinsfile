@@ -42,7 +42,6 @@ pipeline {
                         withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
                             script {
                                 sh '''
-                                    export SONAR_TOKEN=${SONAR_TOKEN}
                                     ${tool('SonarScanner')}/bin/sonar-scanner \
                                         -Dsonar.projectKey=gestion-prod-service \
                                         -Dsonar.projectName=${SERVICE_NAME} \
