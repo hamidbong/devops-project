@@ -41,16 +41,17 @@ pipeline {
                     withSonarQubeEnv("${SONARQUBE}") {
                         withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
                             script {
-                                sh '''
+                                sh """
                                     ${tool('SonarScanner')}/bin/sonar-scanner \
-                                        -Dsonar.projectKey=gestion-prod-service \
+                                        -Dsonar.projectKey=${SERVICE_NAME} \
                                         -Dsonar.projectName=${SERVICE_NAME} \
-                                        -Dsonar.projectVersion=${BUILD_NUMBER} \
-                                        -Dsonar.login=${SONAR_TOKEN} \
+                                        -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                        -Dsonar.token=${SONAR_TOKEN} \
                                         -Dsonar.sources=src/main/java \
                                         -Dsonar.java.binaries=target/classes
-                                '''
+                                """
                             }
+
                         }
                     }
                 }
