@@ -56,18 +56,15 @@ pipeline {
             steps {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv("${SONARQUBE}") {
-                        withCredentials([string(credentialsId: 'sonarqube-token_gestion-prod-service', variable: 'SONAR_TOKEN')]) {
-                            script {
-                                sh """
-                                    ${tool('SonarScanner')}/bin/sonar-scanner \
-                                        -Dsonar.projectKey=${SERVICE_NAME} \
-                                        -Dsonar.projectName=${SERVICE_NAME} \
-                                        -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                                        -Dsonar.sources=src/main/java \
-                                        -Dsonar.java.binaries=target/classes
-                                """
-                            }
-
+                        script {
+                            sh """
+                                ${tool('SonarScanner')}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=${SERVICE_NAME} \
+                                    -Dsonar.projectName=${SERVICE_NAME} \
+                                    -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                    -Dsonar.sources=src/main/java \
+                                    -Dsonar.java.binaries=target/classes
+                            """
                         }
                     }
                 }
@@ -85,6 +82,7 @@ pipeline {
                 }
             }
         }
+        
         
 
         stage('Docker Access Test') {
