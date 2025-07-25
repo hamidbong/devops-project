@@ -37,28 +37,33 @@ pipeline {
 
         stage('OWASP Dependency-Check (Docker)') {
             steps {
-                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
-                    sh """
-                        mkdir -p ${DEP_CHECK_REPORT_DIR}
-                        docker run --rm \
-                            -v ${WORKSPACE}/${SERVICE_NAME}:/src \
-                            -v ${DEP_CHECK_REPORT_DIR}:/report \
-                            owasp/dependency-check \
-                            --scan /src \
-                            --out /report \
-                            --format ALL \
-                            --prettyPrint \
-                            --nvdApiKey $NVD_KEY
-                    """
+                script {
+                    def reportDir = "${env.WORKSPACE}/${env.SERVICE_NAME}-depcheck-report"
+
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                        sh """
+                            mkdir -p ${reportDir}
+                            docker run --rm \
+                                -v ${env.WORKSPACE}/${env.SERVICE_NAME}:/src \
+                                -v ${reportDir}:/report \
+                                owasp/dependency-check \
+                                --scan /src \
+                                --out /report \
+                                --format ALL \
+                                --prettyPrint \
+                                --nvdApiKey=$NVD_KEY
+                        """
+                    }
+
+                    dependencyCheckPublisher pattern: "${env.SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
+                        failedTotalCritical: 1,
+                        unstableTotalHigh: 1
+
+                    archiveArtifacts artifacts: "${env.SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
                 }
-
-                dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
-                    failedTotalCritical: 1,
-                    unstableTotalHigh: 1
-
-                archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
             }
         }
+
 
         stage('SonarQube Analysis (Docker)') {
             steps {
