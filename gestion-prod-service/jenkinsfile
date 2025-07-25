@@ -48,12 +48,12 @@ pipeline {
 
                             sh """
                                 ${tool('SonarScanner')}/bin/sonar-scanner \
-                                    -Dsonar.projectKey=ci-cd-npm-node \
+                                    -Dsonar.projectKey=ci-cd-mvn-node \
                                     -Dsonar.projectName=${SERVICE_NAME} \
                                     -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                     -Dsonar.sources=${SERVICE_NAME} \
                                     -Dsonar.login=$SONAR_TOKEN \
-                                    -Dsonar.nodejs.executable=${nodePath} \
+                                    -Dsonar.java.binaries=target/classes \
                                     -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
                             """
                         }
