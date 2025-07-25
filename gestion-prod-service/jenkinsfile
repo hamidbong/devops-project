@@ -42,7 +42,7 @@ pipeline {
                         withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
                             script {
                                 sh """
-                                    mvn sonar:sonar \
+                                    ${tool('SonarScanner')}/bin/sonar-scanner \
                                         -Dsonar.projectKey=ci-cd-mvn-gestion-prod \
                                         -Dsonar.projectName=${SERVICE_NAME} \
                                         -Dsonar.projectVersion=${env.BUILD_NUMBER} \
