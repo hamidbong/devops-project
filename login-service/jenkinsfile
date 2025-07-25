@@ -70,10 +70,11 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {  // Reuse the same SonarQube server ID
+                withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
                     retry(3) {
                         timeout(time: 1, unit: 'MINUTES') {
-                            waitForQualityGate abortPipeline: true
+                            // Pass the token explicitly
+                            waitForQualityGate abortPipeline: true, credentialsId: 'sonarqube_token-login'
                         }
                     }
                 }
