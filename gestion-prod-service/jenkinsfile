@@ -45,7 +45,6 @@ pipeline {
                                         -Dsonar.projectKey=${SERVICE_NAME} \
                                         -Dsonar.projectName=${SERVICE_NAME} \
                                         -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                                        -Dsonar.login=$SONAR_TOKEN \
                                         -Dsonar.sources=src/main/java \
                                         -Dsonar.java.binaries=target/classes
                                 """
