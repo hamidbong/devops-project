@@ -44,7 +44,8 @@ pipeline {
                 withSonarQubeEnv("${SONARQUBE}") {
                     withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
                         script {
-                            def nodePath = sh(returnStdout: true, script: 'which node').trim()
+                            // Ensure Maven compiles the project first (if not already done)
+                            sh "mvn clean compile test-compile"
 
                             sh """
                                 ${tool('SonarScanner')}/bin/sonar-scanner \
@@ -52,9 +53,12 @@ pipeline {
                                     -Dsonar.projectName=${SERVICE_NAME} \
                                     -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                     -Dsonar.sources=${SERVICE_NAME} \
-                                    -Dsonar.login=$SONAR_TOKEN \
+                                    -Dsonar.tests=src/test/java \
                                     -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
+                                    -Dsonar.java.test.binaries=target/test-classes \
+                                    -Dsonar.junit.reportPaths=target/surefire-reports \
+                                    -Dsonar.jacoco.reportPaths=target/jacoco.exec \
+                                    -Dsonar.login=$SONAR_TOKEN
                             """
                         }
                     }
