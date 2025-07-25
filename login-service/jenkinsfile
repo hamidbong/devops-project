@@ -41,24 +41,6 @@ pipeline {
         }
         
 
-        /*stage('OWASP Dependency-Check') {
-            steps {
-                dependencyCheck additionalArguments: ''' 
-                            -o './dependency-check-report' 
-                            -s './' 
-                            -f 'ALL' 
-                            --prettyPrint 
-                            --nvdApiKey ${NVD_API_KEY}''', 
-                    odcInstallation: 'DependencyCheck'
-
-                dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
-                    failedTotalCritical: 1,
-                    unstableTotalHigh: 1
-
-                archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
-            }
-        }*/
-
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
@@ -82,46 +64,30 @@ pipeline {
         }
 
 
-        /*stage('OWASP Dependency-Check') {
-            steps {
-                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
-                    dependencyCheck additionalArguments: """ 
-                                -o './dependency-check-report' 
-                                -s './' 
-                                -f 'ALL' 
-                                --prettyPrint 
-                                --nvdApiKey=$NVD_KEY""", 
-                        odcInstallation: 'DependencyCheck'
-
-                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
-                        failedTotalCritical: 1,
-                        unstableTotalHigh: 1
-
-                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
-                }
-            }
-        }*/
-
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
-                    script {
-                        def nodePath = sh(returnStdout: true, script: 'which node').trim()
-                        sh """
-                            ${tool('SonarScanner')}/bin/sonar-scanner \
-                                -Dsonar.projectKey=ci-cd-npm-node \
-                                -Dsonar.projectName=login-service \
-                                -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                                -Dsonar.sources=login-service \
-                                -Dsonar.login=${SONAR_TOKEN} \
-                                -Dsonar.nodejs.executable=${nodePath} \
-                                -Dsonar.javascript.lcov.reportPaths=login-service/coverage/lcov.info
-                        """
+                    withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
+                        script {
+                            def nodePath = sh(returnStdout: true, script: 'which node').trim()
+
+                            sh """
+                                ${tool('SonarScanner')}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=ci-cd-npm-node \
+                                    -Dsonar.projectName=${SERVICE_NAME} \
+                                    -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                    -Dsonar.sources=${SERVICE_NAME} \
+                                    -Dsonar.login=$SONAR_TOKEN \
+                                    -Dsonar.nodejs.executable=${nodePath} \
+                                    -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
+                            """
+                        }
                     }
                 }
             }
         }
+
 
         stage('Quality Gate') {
             steps {
