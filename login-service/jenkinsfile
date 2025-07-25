@@ -82,13 +82,12 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                retry(3) {
-                    timeout(time: 5, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
+                timeout(time: 1, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
+
         stage('Trivy Filesystem Scan') {
             steps {
                 dir('login-service') {
