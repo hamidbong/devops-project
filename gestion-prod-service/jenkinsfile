@@ -11,7 +11,7 @@ pipeline {
 
     environment {
         SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
-        SONAR_TOKEN = credentials('sonarqube-token_gestion-prod-service')
+        SONAR_TOKEN = credentials('sonarqube_token-login')
         IMAGE_NAME = "hamidbong/docker-quickstart"
 
         TRIVY_SERVER = "http://192.168.100.32:4954"
@@ -53,11 +53,6 @@ pipeline {
                                     -Dsonar.projectName=${SERVICE_NAME} \
                                     -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                     -Dsonar.sources=${SERVICE_NAME} \
-                                    -Dsonar.tests=src/test/java \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.java.test.binaries=target/test-classes \
-                                    -Dsonar.junit.reportPaths=target/surefire-reports \
-                                    -Dsonar.jacoco.reportPaths=target/jacoco.exec \
                                     -Dsonar.login=$SONAR_TOKEN
                             """
                         }
