@@ -63,6 +63,8 @@ pipeline {
             }
         }
 
+
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
@@ -70,25 +72,21 @@ pipeline {
                         script {
                             def nodePath = sh(returnStdout: true, script: 'which node').trim()
 
-                            sh '''
-                                export NODE_PATH=$(which node)
-                                export SONAR_TOKEN_ENV=$SONAR_TOKEN
-
-                                ${SONAR_SCANNER}/bin/sonar-scanner \
+                            sh """
+                                ${tool('SonarScanner')}/bin/sonar-scanner \
                                     -Dsonar.projectKey=ci-cd-npm-node \
-                                    -Dsonar.projectName=login-service \
-                                    -Dsonar.projectVersion=$BUILD_NUMBER \
-                                    -Dsonar.sources=login-service \
-                                    -Dsonar.login=$SONAR_TOKEN_ENV \
-                                    -Dsonar.nodejs.executable=$NODE_PATH \
-                                    -Dsonar.javascript.lcov.reportPaths=login-service/coverage/lcov.info
-                            '''
+                                    -Dsonar.projectName=${SERVICE_NAME} \
+                                    -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                    -Dsonar.sources=${SERVICE_NAME} \
+                                    -Dsonar.login=$SONAR_TOKEN \
+                                    -Dsonar.nodejs.executable=${nodePath} \
+                                    -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
+                            """
                         }
                     }
                 }
             }
         }
-
 
 
         stage('Quality Gate') {
