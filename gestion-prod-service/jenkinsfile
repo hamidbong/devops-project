@@ -58,19 +58,25 @@ pipeline {
         }
 
 
+
         stage('SonarQube Analysis') {
             steps {
-                dir('gestion-prod-service') {
-                    withSonarQubeEnv('sonarqube_devops_master_analyse') {
-                        sh """
-                        ${tool('SonarScanner')}/bin/sonar-scanner \
-                        -Dsonar.projectKey=gestion-prod-service \
-                        -Dsonar.projectName='gestion-prod-service' \
-                        -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                        -Dsonar.sources=src/main/java \
-                        -Dsonar.java.binaries=target/classes \
-                        -Dsonar.login=${SONAR_TOKEN}
-                        """
+                withSonarQubeEnv("${SONARQUBE}") {
+                    withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
+                        script {
+                            def nodePath = sh(returnStdout: true, script: 'which node').trim()
+
+                            sh """
+                                ${tool('SonarScanner')}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=ci-cd-npm-node \
+                                    -Dsonar.projectName=${SERVICE_NAME} \
+                                    -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                    -Dsonar.sources=${SERVICE_NAME} \
+                                    -Dsonar.login=$SONAR_TOKEN \
+                                    -Dsonar.nodejs.executable=${nodePath} \
+                                    -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
+                            """
+                        }
                     }
                 }
             }
