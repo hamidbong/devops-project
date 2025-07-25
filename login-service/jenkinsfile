@@ -67,7 +67,7 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
+        /*stage('Quality Gate') {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
                     retry(3) {
@@ -78,9 +78,9 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
-        /*stage('Quality Gate') {
+        stage('Quality Gate') {
             steps {
                 retry(3) {
                     timeout(time: 1, unit: 'MINUTES') {
@@ -88,7 +88,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         stage('Trivy Filesystem Scan') {
             steps {
                 dir('login-service') {
