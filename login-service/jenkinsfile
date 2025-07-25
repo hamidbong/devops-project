@@ -1,5 +1,8 @@
-pipeline {
+def SERVICE_NAME = 'login-service'  // adapter à chaque fichier
 
+
+pipeline {
+    
     agent any
 
     environment {
@@ -38,7 +41,7 @@ pipeline {
         }
         
 
-        stage('OWASP Dependency-Check') {
+        /*stage('OWASP Dependency-Check') {
             steps {
                 dependencyCheck additionalArguments: ''' 
                             -o './dependency-check-report' 
@@ -54,7 +57,52 @@ pipeline {
 
                 archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
             }
+        }*/
+
+
+        stage('OWASP Dependency-Check') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                        dependencyCheck additionalArguments: """ 
+                            -s . 
+                            -o ../${SERVICE_NAME}-depcheck-report 
+                            -f ALL 
+                            --prettyPrint 
+                            --nvdApiKey=$NVD_KEY""", 
+                        odcInstallation: 'DependencyCheck'
+                    }
+                }
+
+                dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
+                    failedTotalCritical: 1,
+                    unstableTotalHigh: 1
+
+                archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
+            }
         }
+
+
+        /*stage('OWASP Dependency-Check') {
+            steps {
+                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                    dependencyCheck additionalArguments: """ 
+                                -o './dependency-check-report' 
+                                -s './' 
+                                -f 'ALL' 
+                                --prettyPrint 
+                                --nvdApiKey=$NVD_KEY""", 
+                        odcInstallation: 'DependencyCheck'
+
+                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                        failedTotalCritical: 1,
+                        unstableTotalHigh: 1
+
+                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                }
+            }
+        }*/
+
 
         stage('SonarQube Analysis') {
             steps {
