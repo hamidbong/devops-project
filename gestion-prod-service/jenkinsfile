@@ -35,57 +35,47 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency-Check (Docker)') {
+        stage('OWASP Dependency-Check') {
             steps {
-                script {
-                    def reportDir = "${env.WORKSPACE}/${env.SERVICE_NAME}-depcheck-report"
+                dir("${SERVICE_NAME}") {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                        dependencyCheck additionalArguments: ''' 
+                            -s . 
+                            -o ../${SERVICE_NAME}-depcheck-report 
+                            -f ALL 
+                            --prettyPrint 
+                            --nvdApiKey=${NVD_API_KEY}''', 
+                        odcInstallation: 'DependencyCheck'
+                    }
+                }
 
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
+                    failedTotalCritical: 1,
+                    unstableTotalHigh: 1
+
+                archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
+            }
+        }
+
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('gestion-prod-service') {
+                    withSonarQubeEnv('sonarqube_devops_master_analyse') {
                         sh """
-                            mkdir -p ${reportDir}
-                            docker run --rm \
-                                -v ${env.WORKSPACE}/${env.SERVICE_NAME}:/src \
-                                -v ${reportDir}:/report \
-                                owasp/dependency-check \
-                                --scan /src \
-                                --out /report \
-                                --format ALL \
-                                --prettyPrint \
-                                --nvdApiKey=$NVD_KEY
+                        ${tool('SonarScanner')}/bin/sonar-scanner \
+                        -Dsonar.projectKey=gestion-prod-service \
+                        -Dsonar.projectName='gestion-prod-service' \
+                        -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                        -Dsonar.sources=src/main/java \
+                        -Dsonar.java.binaries=target/classes \
+                        -Dsonar.login=${SONAR_TOKEN}
                         """
                     }
-
-                    dependencyCheckPublisher pattern: "${env.SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
-                        failedTotalCritical: 1,
-                        unstableTotalHigh: 1
-
-                    archiveArtifacts artifacts: "${env.SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
                 }
             }
         }
 
-
-        stage('SonarQube Analysis (Docker)') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
-                        script {
-                            sh """
-                                docker run --rm \
-                                    -v ${WORKSPACE}:/usr/src \
-                                    sonarsource/sonar-scanner-cli \
-                                    -Dsonar.projectKey=ci-cd-${SERVICE_NAME} \
-                                    -Dsonar.projectName=${SERVICE_NAME} \
-                                    -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                                    -Dsonar.sources=${SERVICE_NAME} \
-                                    -Dsonar.login=$SONAR_TOKEN \
-                                    -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
-                            """
-                        }
-                    }
-                }
-            }
-        }
 
         stage("Quality Gates") {
             steps {
