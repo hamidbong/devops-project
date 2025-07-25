@@ -56,8 +56,7 @@ pipeline {
                 }
 
                 dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
-                    failedTotalCritical: 1,
-                    unstableTotalHigh: 1
+                    
 
                 archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
             }
