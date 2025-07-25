@@ -35,18 +35,19 @@ pipeline {
             }
         }
 
-       stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv("${SONARQUBE}") {
                         withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
                             script {
                                 sh '''
+                                    export SONAR_TOKEN=${SONAR_TOKEN}
                                     ${tool('SonarScanner')}/bin/sonar-scanner \
-                                        -Dsonar.projectKey=${SERVICE_NAME} \
+                                        -Dsonar.projectKey=gestion-prod-service \
                                         -Dsonar.projectName=${SERVICE_NAME} \
                                         -Dsonar.projectVersion=${BUILD_NUMBER} \
-                                        -Dsonar.login=${SONAR_TOKEN} \
+                                        -Dsonar.login=$SONAR_TOKEN \
                                         -Dsonar.sources=src/main/java \
                                         -Dsonar.java.binaries=target/classes
                                 '''
@@ -55,6 +56,8 @@ pipeline {
                     }
                 }
             }
+        }
+
         }
 
 
