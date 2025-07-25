@@ -40,7 +40,18 @@ pipeline {
                 dir('gestion-prod-service') {
                     withSonarQubeEnv("${SONARQUBE}") {
                         withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
-                            sh 'mvn clean package sonar:sonar -Dsonar.login=$SONAR_TOKEN'
+                            script {
+                                sh """
+                                    mvn sonar:sonar \
+                                        -Dsonar.projectKey=ci-cd-mvn-gestion-prod \
+                                        -Dsonar.projectName=${SERVICE_NAME} \
+                                        -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                                        -Dsonar.login=${SONAR_TOKEN} \
+                                        -Dsonar.sources=src/main/java \
+                                        -Dsonar.tests=src/test/java \
+                                        -Dsonar.java.binaries=target/classes
+                                """
+                            }
                         }
                     }
                 }
@@ -48,32 +59,6 @@ pipeline {
         }
 
         
-
-
-
-        /*stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    withCredentials([string(credentialsId: 'sonarqube_token-login', variable: 'SONAR_TOKEN')]) {
-                        script {
-                            // Ensure Maven compiles the project first (if not already done)
-                            sh "mvn clean compile test-compile"
-
-                            sh """
-                                ${tool('SonarScanner')}/bin/sonar-scanner \
-                                    -Dsonar.projectKey=ci-cd-mvn-node \
-                                    -Dsonar.projectName=${SERVICE_NAME} \
-                                    -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                                    -Dsonar.sources=${SERVICE_NAME} \
-                                    -Dsonar.login=$SONAR_TOKEN
-                            """
-                        }
-                    }
-                }
-            }
-        }*/
-
-
         stage("Quality Gates") {
             steps {
                 retry(3) {
