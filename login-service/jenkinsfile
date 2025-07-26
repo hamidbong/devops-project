@@ -89,7 +89,7 @@ pipeline {
             }
         }
 
-        /*stage('Trivy Filesystem Scan') {
+        stage('Trivy Filesystem Scan') {
             steps {
                 dir('login-service') {
                     sh '''
@@ -104,7 +104,7 @@ pipeline {
                     '''
                 }
             }
-        }*/
+        }
 
         stage('Check Docker Daemon') {
             steps {
@@ -131,7 +131,7 @@ pipeline {
             }
         }
 
-        /*stage('Scan with Trivy') {
+        stage('Scan with Trivy') {
             steps {
                 script {
                     try {
@@ -161,7 +161,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
 
             }
-        }*/
+        }
 
         stage('Push Docker Image') {
             steps {
