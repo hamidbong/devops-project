@@ -53,7 +53,7 @@ pipeline {
                         odcInstallation: 'DependencyCheck'
                     }
                 }
-
+                /ggggggg
                 dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
                     failedTotalCritical: 1,
                     unstableTotalHigh: 1
