@@ -80,7 +80,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'MINUTES') {
+                timeout(time: 3, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -148,7 +148,8 @@ pipeline {
                         error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
                     }
                 }
-                archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
+
+                archiveArtifacts artifacts: "${SERVICE_NAME}/reports/trivy-report.json", allowEmptyArchive: true
             }
             post {
                 failure {
