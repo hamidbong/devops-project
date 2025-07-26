@@ -101,6 +101,22 @@ pipeline {
             }
         }
 
+        /*stage('Trivy Filesystems Scan') {
+            steps {
+                dir('login-service') {
+                    sh '''
+                        docker run --rm \
+                            -v $(pwd):/scan \
+                            aquasec/trivy fs \
+                            --security-checks vuln,config \
+                            --severity CRITICAL \
+                            --exit-code 1 \
+                            /scan
+                    '''
+                }
+            }
+        }*/
+
         stage('Check Docker Daemon') {
             steps {
                 sh 'docker version'
@@ -155,11 +171,6 @@ pipeline {
 
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
 
-            }
-            post {
-                failure {
-                    error "❌ Trivy found CRITICAL/HIGH vulnerabilities!"
-                }
             }
         }
 
