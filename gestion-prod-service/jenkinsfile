@@ -82,6 +82,18 @@ pipeline {
                 }
             }
         }
+
+        stage('Trivy Filesystem Scan') {
+            steps {
+                dir('login-service') {
+                    sh '''
+                        docker run --rm \
+                            -v $(pwd):/scan \
+                            aquasec/trivy fs --security-checks vuln,config /scan
+                    '''
+                }
+            }
+        }
         
         
 
@@ -146,6 +158,41 @@ pipeline {
                         image.push()
                         image.push('latest') // Optional: also push "latest" tag
                     }
+                }
+            }
+        }
+
+        stage('Cleanup Docker') {
+            steps {
+                script {
+                    // Supprime l'image locale après le push
+                    sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
+                    sh "docker rmi ${IMAGE_NAME}:latest || true"
+                    
+                    // Optionnel : Nettoyage des images "<none>" (dangling)
+                    sh "docker image prune -f || true"
+                }
+            }
+        }
+
+        stage('Apply Kubernetes Files') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+                    sh """
+                        cat k8s/${SERVICE_NAME}/deployment.yaml | \
+                        sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                        kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
+                        # kubectl apply -f k8s/ingress.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+                    sh "kubectl rollout status deployment/${SERVICE_NAME}-deployment --timeout=300s"
+                    sh "kubectl wait --for=condition=ready pod -l app=${SERVICE_NAME} --timeout=300s"
                 }
             }
         }
