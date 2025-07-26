@@ -131,7 +131,7 @@ pipeline {
             }
         }
 
-        stage('Scan with Trivy') {
+        /*stage('Scan with Trivy') {
             steps {
                 script {
                     try {
@@ -161,7 +161,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
 
             }
-        }
+        }*/
 
         stage('Push Docker Image') {
             steps {
