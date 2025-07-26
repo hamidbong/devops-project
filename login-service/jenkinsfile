@@ -6,7 +6,6 @@ pipeline {
     agent any
 
     environment {
-//        SONAR_TOKEN   = credentials('sonarqube_token-login')
         SONARQUBE     = 'sonarqube_devops_master_analyse'
         NVD_API_KEY   = credentials('nvd-api-key')
         IMAGE_NAME    = "hamidbong/login-service"
@@ -20,27 +19,24 @@ pipeline {
             }
         }
 
-        stage('Install & Test') {
-            parallel {
-                stage('Install & Generate Lock') {
-                    steps {
-                        dir('login-service') {
-                            sh 'npm ci --no-audit'
-                            sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
-                        }
-                    }
-                }
-                stage('Run Tests') {
-                    steps {
-                        dir('login-service') {
-                            sh 'npm test -- --coverage'
-                        }
-                    }
+        stage('Install & Generate Lock') {
+            steps {
+                dir('login-service') {
+                    sh 'npm ci --no-audit'
+                    sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
                 }
             }
         }
+        stage('Run Tests') {
+            steps {
+                dir('login-service') {
+                    sh 'npm test -- --coverage'
+                }
+            }   
+        }
+        
 
-        /*stage('OWASP Dependency-Check') {
+        stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -53,14 +49,14 @@ pipeline {
                         odcInstallation: 'DependencyCheck'
                     }
                 }
-                /ggggggg
+
                 dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
                     failedTotalCritical: 1,
                     unstableTotalHigh: 1
 
                 archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
             }
-        }*/
+        }
 
         stage('SonarQube Analysis') {
             steps {
@@ -102,22 +98,9 @@ pipeline {
             }
         }
 
-        stage('Docker Access Test') {
+        stage('Check Docker Daemon') {
             steps {
                 sh 'docker version'
-            }
-        }
-
-        stage('Cleanup Docker') {
-            steps {
-                script {
-                    // Supprime l'image locale après le push
-                    sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
-                    sh "docker rmi ${IMAGE_NAME}:latest || true"
-                    
-                    // Optionnel : Nettoyage des images "<none>" (dangling)
-                    sh "docker image prune -f || true"
-                }
             }
         }
 
@@ -158,7 +141,7 @@ pipeline {
                                 --ignore-unfixed \
                                 --timeout 30m \
                                 --format json \
-                                --output /project/trivy-report.json
+                                --output ${SERVICE_NAME}/reports/trivy-report.json
                         '''
 
                     } catch (err) {
@@ -220,6 +203,28 @@ pipeline {
                 }
             }
         }
+
+        stage('Git Tag') {
+            when {
+                branch 'main'  // on ne tag que sur la branche main
+            }
+            steps {
+                script {
+                    def versionTag = "v${env.BUILD_NUMBER}"  // Exemple : v27
+
+                    // Configure l'utilisateur Git si nécessaire (utile dans Jenkins agents)
+                    sh 'git config user.name "Jenkins CI"'
+                    sh 'git config user.email "jenkins@example.com"'
+
+                    // Crée le tag et le pousse sur le repo distant
+                    sh "git tag ${versionTag}"
+                    sh "git push origin ${versionTag}"
+
+                    echo "✅ Git tag ${versionTag} created and pushed."
+                }
+            }
+        }
+
     }
 
     post {
