@@ -144,7 +144,8 @@ pipeline {
                                 --ignore-unfixed \
                                 --timeout 30m \
                                 --format json \
-                                --output ${SERVICE_NAME}/reports/trivy-report.json
+                                --output /project/trivy-report.json
+
                         '''
 
                     } catch (err) {
@@ -152,7 +153,8 @@ pipeline {
                     }
                 }
 
-                archiveArtifacts artifacts: "${SERVICE_NAME}/reports/trivy-report.json", allowEmptyArchive: true
+                archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
+
             }
             post {
                 failure {
