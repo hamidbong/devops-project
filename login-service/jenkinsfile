@@ -86,7 +86,7 @@ pipeline {
             }
         }
 
-        stage('Trivy Filesystem Scan') {
+        stage('Trivy Filesystems Scan') {
             steps {
                 dir('login-service') {
                     sh '''
