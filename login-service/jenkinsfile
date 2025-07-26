@@ -81,7 +81,7 @@ pipeline {
         stage("Quality Gates") {
             steps {
                 retry(5) {
-                    timeout(time: 2, unit: 'MINUTES') {
+                    timeout(time: 1, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
                     sleep(time: 10, unit: 'SECONDS')
@@ -89,7 +89,7 @@ pipeline {
             }
         }
 
-        /*stage('Trivy Filesystems Scan') {
+        /*stage('Trivy Filesystem Scan') {
             steps {
                 dir('login-service') {
                     sh '''
@@ -97,6 +97,7 @@ pipeline {
                             -v $(pwd):/scan \
                             aquasec/trivy fs \
                             --security-checks vuln,config \
+                            --output /project/trivy-Filesystem-report.json
                             --severity CRITICAL \
                             --exit-code 1 \
                             /scan
