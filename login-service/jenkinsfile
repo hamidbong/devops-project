@@ -89,7 +89,7 @@ pipeline {
             }
         }
 
-        stage('Trivy Filesystems Scan') {
+        /*stage('Trivy Filesystems Scan') {
             steps {
                 dir('login-service') {
                     sh '''
@@ -99,9 +99,9 @@ pipeline {
                     '''
                 }
             }
-        }
+        }*/
 
-        /*stage('Trivy Filesystems Scan') {
+        stage('Trivy Filesystems Scan') {
             steps {
                 dir('login-service') {
                     sh '''
@@ -115,7 +115,7 @@ pipeline {
                     '''
                 }
             }
-        }*/
+        }
 
         stage('Check Docker Daemon') {
             steps {
