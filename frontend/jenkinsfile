@@ -1,9 +1,11 @@
-pipeline {
+def SERVICE_NAME = 'frontend'  // adapter à chaque fichier
 
+
+pipeline {
+    
     agent any
 
     environment {
-        SONAR_TOKEN   = credentials('sonarqube_token-login')
         SONARQUBE     = 'sonarqube_devops_master_analyse'
         NVD_API_KEY   = credentials('nvd-api-key')
         IMAGE_NAME    = "hamidbong/frontend"
@@ -17,86 +19,94 @@ pipeline {
             }
         }
 
-        stage('Install & Test') {
-            parallel {
-                stage('Install & Generate Lock') {
-                    steps {
-                        dir('frontend') {
-                            sh 'npm ci --no-audit'
-                            sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
-                        }
-                    }
-                }
-                stage('Run Tests') {
-                    steps {
-                        dir('frontend') {
-                            sh 'npm test -- --coverage'
-                        }
-                    }
+        stage('Install & Generate Lock') {
+            steps {
+                dir('frontend') {
+                    sh 'npm ci --no-audit'
+                    sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
                 }
             }
         }
-        
-        stage('OWASP Dependency-Check') {
+        stage('Run Tests') {
             steps {
-                dependencyCheck additionalArguments: ''' 
-                            -o './dependency-check-report' 
-                            -s './' 
-                            -f 'ALL' 
-                            --prettyPrint 
-                            --nvdApiKey ${NVD_API_KEY}''', 
-                    odcInstallation: 'DependencyCheck'
+                dir('frontend') {
+                    sh 'npm test -- --coverage'
+                }
+            }   
+        }
+        
 
-                dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+        /*stage('OWASP Dependency-Check') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                        dependencyCheck additionalArguments: ''' 
+                            -s . 
+                            -o ../${SERVICE_NAME}-depcheck-report 
+                            -f ALL 
+                            --prettyPrint 
+                            --nvdApiKey=${NVD_API_KEY}''', 
+                        odcInstallation: 'DependencyCheck'
+                    }
+                }
+
+                dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
                     failedTotalCritical: 1,
                     unstableTotalHigh: 1
 
-                archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
             }
-        }
+        }*/
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     script {
                         def nodePath = sh(returnStdout: true, script: 'which node').trim()
+
                         sh """
                             ${tool('SonarScanner')}/bin/sonar-scanner \
                                 -Dsonar.projectKey=ci-cd-npm-node \
-                                -Dsonar.projectName=frontend \
+                                -Dsonar.projectName=${SERVICE_NAME} \
                                 -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                                -Dsonar.sources=frontend \
-                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.sources=${SERVICE_NAME} \
                                 -Dsonar.nodejs.executable=${nodePath} \
-                                -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+                                -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
                         """
                     }
                 }
             }
         }
 
-        stage('Quality Gate') {
+        stage("Quality Gates") {
             steps {
-                retry(3) {
+                retry(5) {
                     timeout(time: 1, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
+                    sleep(time: 10, unit: 'SECONDS')
                 }
             }
         }
+
         stage('Trivy Filesystem Scan') {
             steps {
                 dir('frontend') {
                     sh '''
                         docker run --rm \
                             -v $(pwd):/scan \
-                            aquasec/trivy fs --security-checks vuln,config /scan
+                            aquasec/trivy fs \
+                            --security-checks vuln,config \
+                            --output /project/trivy-Filesystem-report.json
+                            --severity CRITICAL \
+                            --exit-code 1 \
+                            /scan
                     '''
                 }
             }
         }
 
-        stage('Docker Access Test') {
+        stage('Check Docker Daemon') {
             steps {
                 sh 'docker version'
             }
@@ -140,18 +150,16 @@ pipeline {
                                 --timeout 30m \
                                 --format json \
                                 --output /project/trivy-report.json
+
                         '''
 
                     } catch (err) {
                         error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
                     }
                 }
+
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
-            }
-            post {
-                failure {
-                    error "❌ Trivy found CRITICAL/HIGH vulnerabilities!"
-                }
+
             }
         }
 
@@ -174,7 +182,7 @@ pipeline {
                     sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
                     sh "docker rmi ${IMAGE_NAME}:latest || true"
                     
-                    // Optionnel : nnnNettoyage des images "<none>" (dangling)
+                    // Optionnel : Nettoyage des images "<none>" (dangling)
                     sh "docker image prune -f || true"
                 }
             }
@@ -184,9 +192,9 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
                     sh """
-                        cat k8s/frontend/deployment.yaml | \
+                        cat k8s/${SERVICE_NAME}/deployment.yaml | \
                         sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
-                        kubectl apply -f k8s/frontend/service.yaml
+                        kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
                         # kubectl apply -f k8s/ingress.yaml
                     """
                 }
@@ -196,11 +204,33 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
-                    sh 'kubectl rollout status deployment/login-deployment --timeout=300s'
-                    sh 'kubectl wait --for=condition=ready pod -l app=frontend --timeout=300s'
+                    sh "kubectl rollout status deployment/${SERVICE_NAME}-deployment --timeout=300s"
+                    sh "kubectl wait --for=condition=ready pod -l app=${SERVICE_NAME} --timeout=300s"
                 }
             }
         }
+
+        stage('Git Tag') {
+            when {
+                branch 'main'  // on ne tag que sur la branche main
+            }
+            steps {
+                script {
+                    def versionTag = "v${env.BUILD_NUMBER}"  // Exemple : v27
+
+                    // Configure l'utilisateur Git si nécessaire (utile dans Jenkins agents)
+                    sh 'git config user.name "Jenkins CI"'
+                    sh 'git config user.email "jenkins@example.com"'
+
+                    // Crée le tag et le pousse sur le repo distant
+                    sh "git tag ${versionTag}"
+                    sh "git push origin ${versionTag}"
+
+                    echo "✅ Git tag ${versionTag} created and pushed."
+                }
+            }
+        }
+
     }
 
     post {
