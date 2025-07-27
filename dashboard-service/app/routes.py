@@ -6,7 +6,7 @@ users = []
 
 @app.route('/')
 def home():
-    return "Bienvenue dans l'API Flask simple !"
+    return "Bienvenue dans l'API Flask simple !!!!"
 
 @app.route('/users', methods=['GET'])
 def get_users():
