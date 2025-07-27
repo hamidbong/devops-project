@@ -79,7 +79,6 @@ pipeline {
                             --security-checks vuln,config \
                             --output trivy-Filesystem-report.json \
                             /scan
-                        archiveArtifacts artifacts: 'trivy-Filesystem-report.json', allowEmptyArchive: true
                     '''
                 }
             }

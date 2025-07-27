@@ -21,7 +21,7 @@ pipeline {
 
         stage('Install & Generate Lock') {
             steps {
-                dir('frontend') {
+                dir("${SERVICE_NAME}") {
                     sh 'npm ci --no-audit'
                     sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
                 }
@@ -29,7 +29,7 @@ pipeline {
         }
         stage('Run Tests') {
             steps {
-                dir('frontend') {
+                dir("${SERVICE_NAME}") {
                     sh 'npm test -- --coverage'
                 }
             }   
@@ -58,6 +58,7 @@ pipeline {
             }
         }
 
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
@@ -66,7 +67,7 @@ pipeline {
 
                         sh """
                             ${tool('SonarScanner')}/bin/sonar-scanner \
-                                -Dsonar.projectKey=ci-cd-npm-node \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
                                 -Dsonar.projectName=${SERVICE_NAME} \
                                 -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                 -Dsonar.sources=${SERVICE_NAME} \
@@ -91,7 +92,7 @@ pipeline {
 
         stage('Trivy Filesystem Scan') {
             steps {
-                dir('frontend') {
+                dir("${SERVICE_NAME}") {
                     sh '''
                         docker run --rm \
                             -v $(pwd):/scan \
@@ -114,7 +115,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                dir('frontend') {
+                dir("${SERVICE_NAME}") {
                     timeout(time: 15, unit: 'MINUTES') {
                         script {
                             dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
@@ -165,7 +166,7 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                dir('frontend') {
+                dir("${SERVICE_NAME}") {
                     script {
                         docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
                             dockerImage.push()
@@ -175,6 +176,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Cleanup Docker') {
             steps {
                 script {
