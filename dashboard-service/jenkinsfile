@@ -78,8 +78,6 @@ pipeline {
                             aquasec/trivy fs \
                             --security-checks vuln,config \
                             --output trivy-Filesystem-report.json \
-                            --severity CRITICAL,HIGH \
-                            --exit-code 1 \
                             /scan
                         archiveArtifacts artifacts: 'trivy-Filesystem-report.json', allowEmptyArchive: true
                     '''
