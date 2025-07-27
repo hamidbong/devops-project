@@ -93,20 +93,22 @@ pipeline {
                     sh '''
                         docker run --rm \
                             -v $(pwd):/scan \
-                            aquasec/trivy fs --security-checks vuln,config /scan
+                            aquasec/trivy fs \
+                            --security-checks vuln,config \
+                            --output /project/trivy-Filesystem-report.json
+                            --severity CRITICAL \
+                            --exit-code 1 \
+                            /scan
                     '''
                 }
             }
         }
         
-        
-
-        stage('Docker Access Test') {
+        stage('Check Docker Daemon') {
             steps {
                 sh 'docker version'
             }
         }
-
 
         stage('Build Docker Image') {
             steps {
@@ -202,6 +204,20 @@ pipeline {
         }
 
 
+    }
+    post {
+        always {
+            script {
+                echo "🧾 Pipeline completed on build #${env.BUILD_NUMBER}"
+                archiveArtifacts artifacts: 'login-service/coverage/**', allowEmptyArchive: true
+            }
+        }
+        success {
+            echo '✅ Build succeeded!'
+        }
+        failure {
+            echo '❌ Build failed!'
+        }
     }
 
 }
