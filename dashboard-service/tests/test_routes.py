@@ -1,4 +1,5 @@
-from app import app
+from app.routes import app  # Updated import path
+from flask import jsonify, request
 
 def test_home():
     client = app.test_client()
