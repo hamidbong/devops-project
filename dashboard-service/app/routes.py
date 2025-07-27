@@ -1,8 +1,7 @@
+from app import app
 from flask import jsonify, request
-from . import app  # Import app from the same package
 
-# Rest of your route code...
-# Stockage temporaire (en mémoire)
+# In-memory storage for users
 users = []
 
 @app.route('/')
