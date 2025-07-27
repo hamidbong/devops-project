@@ -36,7 +36,7 @@ pipeline {
         }
         
 
-        /*stage('OWASP Dependency-Check') {
+        stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -50,13 +50,13 @@ pipeline {
                     }
                 }
 
-                dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
+                dependencyCheckPublisher pattern: "dependency-check-report/dependency-check-report.xml",
                     failedTotalCritical: 1,
                     unstableTotalHigh: 1
 
-                archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
+                archiveArtifacts artifacts: "dependency-check-report/**", allowEmptyArchive: true
             }
-        }*/
+        }
 
         stage('SonarQube Analysis') {
             steps {
