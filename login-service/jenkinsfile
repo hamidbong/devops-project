@@ -35,49 +35,29 @@ pipeline {
             }   
         }
         
+
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                        dependencyCheck additionalArguments: ''' 
+                        dependencyCheck additionalArguments: '''
                             -s . 
-                            -o ../dependency-check-report
+                            -o "./dependency-check-report" 
                             -f ALL 
                             --prettyPrint 
-                            --nvdApiKey=${NVD_API_KEY}''', 
-                        odcInstallation: 'DependencyCheck'
+                            --nvdApiKey=${NVD_API_KEY}''',
+                            odcInstallation: 'DependencyCheck'
                     }
+
+                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                        failedTotalCritical: 1,
+                        unstableTotalHigh: 1
+
+                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
                 }
-
-                dependencyCheckPublisher pattern: "dependency-check-report/dependency-check-report.xml",
-                    failedTotalCritical: 1,
-                    unstableTotalHigh: 1
-
-                archiveArtifacts artifacts: "dependency-check-report/**", allowEmptyArchive: true
             }
         }
 
-        /*stage('OWASP Dependency-Check') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                        dependencyCheck additionalArguments: ''' 
-                            -s . 
-                            -o ../${SERVICE_NAME}-depcheck-report 
-                            -f ALL 
-                            --prettyPrint 
-                            --nvdApiKey=${NVD_API_KEY}''', 
-                        odcInstallation: 'DependencyCheck'
-                    }
-                }
-
-                dependencyCheckPublisher pattern: "${SERVICE_NAME}-depcheck-report/dependency-check-report.xml",
-                    failedTotalCritical: 1,
-                    unstableTotalHigh: 1
-
-                archiveArtifacts artifacts: "${SERVICE_NAME}-depcheck-report/**", allowEmptyArchive: true
-            }
-        }*/
 
         stage('SonarQube Analysis') {
             steps {
