@@ -85,9 +85,12 @@ pipeline {
                     script {
                         def nodePath = sh(returnStdout: true, script: 'which node').trim()
 
+                        def scannerHome = tool('SonarScanner')
+
                         sh """
                             export SONAR_SCANNER_OPTS="-Xmx1024m -Xms512m"
-                            ${tool('SonarScanner')}/bin/sonar-scanner \
+                            echo "SONAR_SCANNER_OPTS=\$SONAR_SCANNER_OPTS"
+                            ${scannerHome}/bin/sonar-scanner \
                                 -Dsonar.projectKey=ci-cd-npm-node \
                                 -Dsonar.projectName=${SERVICE_NAME} \
                                 -Dsonar.projectVersion=${env.BUILD_NUMBER} \
@@ -100,6 +103,7 @@ pipeline {
                 }
             }
         }
+
 
 
         stage("Quality Gates") {
