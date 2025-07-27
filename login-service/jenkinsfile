@@ -41,7 +41,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dependencyCheck additionalArguments: ''' 
                             -s . 
-                            -o ../${SERVICE_NAME}-depcheck-report 
+                            -o ../dependency-check-report
                             -f ALL 
                             --prettyPrint 
                             --nvdApiKey=${NVD_API_KEY}''', 
