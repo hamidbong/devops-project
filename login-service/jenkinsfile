@@ -176,6 +176,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Cleanup Docker') {
             steps {
                 script {

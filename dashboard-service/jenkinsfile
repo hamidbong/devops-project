@@ -110,9 +110,13 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
-                    dockerImage.push()
-                    dockerImage.push('latest')
+                dir('login-service') {
+                    script {
+                        docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
+                            dockerImage.push()
+                            dockerImage.push('latest')
+                        }
+                    }
                 }
             }
         }
