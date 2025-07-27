@@ -28,7 +28,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('gestion-prod-service') {
+                dir("${SERVICE_NAME}") {
                     sh 'mvn clean install'
                 }
             }
@@ -58,7 +58,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                dir('gestion-prod-service') {
+                dir("${SERVICE_NAME}") {
                     withSonarQubeEnv("${SONARQUBE}") {
                         script {
                             sh """
@@ -74,8 +74,6 @@ pipeline {
                 }
             }
         }
-
-
 
         stage("Quality Gates") {
             steps {
@@ -112,7 +110,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                dir('gestion-prod-service') {
+                dir("${SERVICE_NAME}") {
                     script {
                         // Build the image lloocally////////
                         docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
@@ -132,7 +130,7 @@ pipeline {
         }
 
 
-        stage('Scan with Trivy') {
+        stage('Scan Docker Image with Trivy') {
             steps {
                 script {
                     // Always run with DB update, but use cache if available

@@ -97,9 +97,15 @@ pipeline {
             }
         }
 
-        stage('Scan Docker Image with Trivy') {
+        stage('Setup Trivy Caches') {
             steps {
                 sh 'docker volume create --name trivy_cache || true'
+                sh 'docker volume create --name trivy_javadb_cache || true'
+            }
+        }
+
+        stage('Scan Docker Image with Trivy') {
+            steps {
                 sh '''
                     docker run --rm \
                         -v /var/run/docker.sock:/var/run/docker.sock \
@@ -119,7 +125,7 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                dir('login-service') {
+                dir("${SERVICE_NAME}") {
                     script {
                         docker.withRegistry('https://index.docker.io/v1/', 'dockerHub-login') {
                             dockerImage.push()
