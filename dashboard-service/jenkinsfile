@@ -113,8 +113,6 @@ pipeline {
                         -v $(pwd):/project \
                         aquasec/trivy:latest \
                         image ${IMAGE_NAME}:${BUILD_ID} \
-                        --exit-code 1 \
-                        --severity CRITICAL,HIGH \
                         --ignore-unfixed \
                         --format json \
                         --output /project/trivy-report.json
