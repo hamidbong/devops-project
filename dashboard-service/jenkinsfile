@@ -4,10 +4,10 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE     = 'sonarqube_devops_master_analyse'
-        IMAGE_NAME    = "hamidbong/${SERVICE_NAME}"
-        TRIVY_CACHE   = 'trivy_cache'
-        PYTHONPATH    = "./${SERVICE_NAME}"
+        SONARQUBE   = 'sonarqube_devops_master_analyse'
+        IMAGE_NAME  = "hamidbong/${SERVICE_NAME}"
+        TRIVY_CACHE = 'trivy_cache'
+        PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute path
     }
 
     stages {
@@ -31,7 +31,12 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    sh '. venv/bin/activate && pytest --junitxml=test-results.xml --cov=. --cov-report=xml'
+                    sh '''
+                        . venv/bin/activate
+                        export PYTHONPATH=$PYTHONPATH:$(pwd)
+                        pip install -e .
+                        pytest --junitxml=test-results.xml --cov=app --cov-report=xml
+                    '''
                 }
             }
         }
