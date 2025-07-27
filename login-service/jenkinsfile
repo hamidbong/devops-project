@@ -68,6 +68,7 @@ pipeline {
                         sh """
                             ${tool('SonarScanner')}/bin/sonar-scanner \
                                 -Dsonar.projectKey=ci-cd-npm-node \
+                                -Dsonar.scanner.opts="-Xmx2048m"
                                 -Dsonar.projectName=${SERVICE_NAME} \
                                 -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                 -Dsonar.sources=${SERVICE_NAME} \
