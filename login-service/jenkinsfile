@@ -79,30 +79,27 @@ pipeline {
             }
         }*/
 
-        /*stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     script {
                         def nodePath = sh(returnStdout: true, script: 'which node').trim()
 
-                        def scannerHome = tool('SonarScanner')
-
                         sh """
-                            export SONAR_SCANNER_OPTS="-Xmx1024m -Xms512m"
-                            echo "SONAR_SCANNER_OPTS=\$SONAR_SCANNER_OPTS"
-                            ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=ci-cd-npm-node \
+                            ${tool('SonarScanner')}/bin/sonar-scanner \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
                                 -Dsonar.projectName=${SERVICE_NAME} \
                                 -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                 -Dsonar.sources=${SERVICE_NAME} \
-                                -Dsonar.exclusions=**/node_modules/**,**/build/**,**/*.log,**/*.json,**/*.spec.js,**/*.test.js \
                                 -Dsonar.nodejs.executable=${nodePath} \
                                 -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
                         """
                     }
                 }
             }
-        }*/
+        }
+
+        
 
 
 
