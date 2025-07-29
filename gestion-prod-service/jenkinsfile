@@ -112,7 +112,7 @@ pipeline {
             steps {
                 dir("${SERVICE_NAME}") {
                     script {
-                        // Build the image lloocally////////
+                        // Build the image lloocaly
                         docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                     }
                 }

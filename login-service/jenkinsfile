@@ -179,7 +179,7 @@ pipeline {
         stage('Cleanup Docker') {
             steps {
                 script {
-                    // Supprime l'image locale après le push
+                    // Supprime l'image locale après le push/
                     sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
                     sh "docker rmi ${IMAGE_NAME}:latest || true"
                     
