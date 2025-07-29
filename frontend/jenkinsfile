@@ -57,6 +57,17 @@ pipeline {
             }
         }
 
+        stage('Vérification vulnérabilités') {
+            steps {
+                script {
+                    def report = readFile("${SERVICE_NAME}/dependency-check-report/dependency-check-report.xml")
+                    if (report.contains('<baseSeverity>CRITICAL</baseSeverity>') || report.contains('<severity>critical</severity>')) {
+                        error("Vulnérabilités CRITIQUES détectées — arrêt du pipeline.")
+                    }
+                }
+            }
+        }
+
 
         stage('SonarQube Analysis') {
             steps {
