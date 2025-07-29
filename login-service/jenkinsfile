@@ -62,7 +62,7 @@ pipeline {
             steps {
                 script {
                     def report = readFile("${SERVICE_NAME}/dependency-check-report/dependency-check-report.xml")
-                    if (report.contains('<severity>Critical</severity>')) {
+                    if (report.contains('<severity>Critical</severity>') || report.contains('<severity>critical</severity>')) {
                         error("Vulnérabilités CRITIQUES détectées — arrêt du pipeline.")
                     }
                 }
