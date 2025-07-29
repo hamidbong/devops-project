@@ -61,13 +61,14 @@ pipeline {
         stage('Vérification vulnérabilités') {
             steps {
                 script {
-                    def report = readFile("/dependency-check-report/dependency-check-report.xml")
+                    def report = readFile("${SERVICE_NAME}/dependency-check-report/dependency-check-report.xml")
                     if (report.contains('<severity>Critical</severity>')) {
                         error("Vulnérabilités CRITIQUES détectées — arrêt du pipeline.")
                     }
                 }
             }
         }
+
 
         stage('SonarQube Analysis') {
             steps {
