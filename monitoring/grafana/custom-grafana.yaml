@@ -1,0 +1,15 @@
+grafana:
+  # Configure le service Grafana en NodePort
+  service:
+    type: NodePort
+    nodePort: 30080  # Port exposé sur les nœuds Kubernetes (30000-32767)
+    port: 80
+    targetPort: 3000  # Port interne de Grafana
+
+  # Active l'Ingress pour Grafana
+  ingress:
+    enabled: true
+    hosts:
+      - grafana.local  # Remplacez par votre domaine ou IP du nœud
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
