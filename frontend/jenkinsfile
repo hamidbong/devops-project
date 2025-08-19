@@ -22,8 +22,7 @@ pipeline {
         stage('Install & Generate Lock') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    sh 'npm ci --no-audit'
-                    sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
+                    sh 'npm install --package-lock-only --no-audit'
                 }
             }
         }
