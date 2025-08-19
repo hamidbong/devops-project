@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: stockpro-frontend
+  name: frontend-
 spec:
   replicas: 2
   selector:
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: stockpro-frontend
-        image: ton-registry/stock-pro-frontend:latest
+        image: hamidbong/stock-pro-frontend:latest
         ports:
         - containerPort: 80
 ---
@@ -23,7 +23,6 @@ kind: Service
 metadata:
   name: stockpro-frontend
 spec:
-  type: LoadBalancer  # Ou NodePort, selon ton cluster
   selector:
     app: stockpro-frontend
   ports:
