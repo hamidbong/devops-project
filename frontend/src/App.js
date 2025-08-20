@@ -1,6 +1,5 @@
 import Dashboard from './pages/Dashboard/Dashboard';
 import Login from './pages/Login/Login';
-import Logins from './pages/Logins/Logins';
 import Products from './pages/Products/Products';
 import Register from './pages/Register/Register';
 import logo from './logo.svg';
@@ -13,7 +12,6 @@ function App() {
       <Header></Header>
       <Routes>
         <Route path="/Login" element={<Login></Login>}></Route>
-        <Route path="/Logins" element={<Logins></Logins>}></Route>
         <Route path="/Dashboard" element={<Dashboard></Dashboard>}></Route>
         <Route path="/Products" element={<Products />} />
         <Route path="/Register" element={<Register />} />
