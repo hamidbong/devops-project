@@ -48,12 +48,25 @@ pipeline {
                             odcInstallation: 'DependencyCheck'
                     }
 
+                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                        failedTotalCritical: 1,
+                        unstableTotalHigh: 1
+
                     archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
                 }
             }
         }
 
-       
+        stage('Vérification vulnérabilités') {
+            steps {
+                script {
+                    def report = readFile("${SERVICE_NAME}/dependency-check-report/dependency-check-report.xml")
+                    if (report.contains('<baseSeverity>CRITICAL</baseSeverity>') || report.contains('<severity>critical</severity>')) {
+                        error("Vulnérabilités CRITIQUES détectées — arrêt du pipeline.")
+                    }
+                }
+            }
+        }
 
 
         stage('SonarQube Analysis') {
@@ -96,6 +109,8 @@ pipeline {
                             aquasec/trivy fs \
                             --security-checks vuln,config \
                             --output /project/trivy-Filesystem-report.json
+                            --severity CRITICAL \
+                            --exit-code 1 \
                             /scan
                     '''
                 }
@@ -140,6 +155,8 @@ pipeline {
                                 -v $(pwd):/project \
                                 aquasec/trivy:latest \
                                 image ${IMAGE_NAME}:${BUILD_ID} \
+                                --exit-code 1 \
+                                --severity CRITICAL,HIGH \
                                 --ignore-unfixed \
                                 --timeout 30m \
                                 --format json \
@@ -190,7 +207,7 @@ pipeline {
                         cat k8s/${SERVICE_NAME}/deployment.yaml | \
                         sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
                         kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
-                        # kubectl apply -f k8s/frontend/ingress.yaml
+                        # kubectl apply -f k8s/${SERVICE_NAME}/ingress.yaml
                     """
                 }
             }
