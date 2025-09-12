@@ -1,15 +1,14 @@
-def SERVICE_NAME = 'login-service'  // adapter à chaque fichier
-
+def SERVICE_NAME = 'service-python'  // adapter au nom de ton service
 
 pipeline {
-    
     agent any
 
     environment {
-        SONARQUBE     = 'sonarqube_devops_master_analyse'
-        NVD_API_KEY   = credentials('nvd-api-key')
-        IMAGE_NAME    = "hamidbong/login-service"
-        SLACK_CHANNEL = '#jenkins-alerts' // Remplace par ton canal
+        SONARQUBE   = 'sonarqube_devops_master_analyse'
+        IMAGE_NAME  = "hamidbong/${SERVICE_NAME}"
+        TRIVY_CACHE = 'trivy_cache'
+        PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute path
+        PYTHON_VERSION = '3.10'
     }
 
     stages {
@@ -19,28 +18,6 @@ pipeline {
                 checkout scm
             }
         }
-
-        stage('Install & Generate Lock') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    // Génère le package-lock.json s'il n'existe pas
-                    sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
-                    
-                    // Ensuite seulement, faire un install propre
-                    sh 'npm ci --no-audit'
-                }
-            }
-        }
-
-
-        stage('Run Tests') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh 'npm test -- --coverage'
-                }
-            }   
-        }
-        
 
         stage('OWASP Dependency-Check') {
             steps {
@@ -63,7 +40,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Vérification vulnérabilités') {
             steps {
                 script {
@@ -75,21 +52,20 @@ pipeline {
             }
         }
 
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE}") {
                     script {
-                        def nodePath = sh(returnStdout: true, script: 'which node').trim()
-
                         sh """
                             ${tool('SonarScanner')}/bin/sonar-scanner \
                                 -Dsonar.projectKey=${SERVICE_NAME} \
                                 -Dsonar.projectName=${SERVICE_NAME} \
-                                -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                                 -Dsonar.sources=${SERVICE_NAME} \
-                                -Dsonar.nodejs.executable=${nodePath} \
-                                -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
+                                -Dsonar.python.version=${PYTHON_VERSION} \
+                                -Dsonar.python.coverage.reportPaths=coverage.xml \
+                                -Dsonar.exclusions=**/venv/**,**/__pycache__/** \
+                                -Dsonar.sourceEncoding=UTF-8 \
+                                -Dsonar.projectVersion=${env.BUILD_NUMBER}
                         """
                     }
                 }
@@ -102,7 +78,7 @@ pipeline {
                     timeout(time: 1, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
-                    sleep(time: 10, unit: 'SECONDS')
+                    sleep(time: 5, unit: 'SECONDS')
                 }
             }
         }
@@ -115,7 +91,7 @@ pipeline {
                             -v $(pwd):/scan \
                             aquasec/trivy fs \
                             --security-checks vuln,config \
-                            --output /project/trivy-Filesystem-report.json
+                            --output trivy-Filesystem-report.json \
                             --severity CRITICAL \
                             --exit-code 1 \
                             /scan
@@ -124,19 +100,11 @@ pipeline {
             }
         }
 
-        stage('Check Docker Daemon') {
-            steps {
-                sh 'docker version'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    timeout(time: 15, unit: 'MINUTES') {
-                        script {
-                            dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
-                        }
+                    script {
+                        dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                     }
                 }
             }
@@ -149,35 +117,22 @@ pipeline {
             }
         }
 
-        stage('Scan with Trivy') {
+        stage('Scan Docker Image with Trivy') {
             steps {
-                script {
-                    try {
-                        sh '''
-                            docker run --rm \
-                                -v /var/run/docker.sock:/var/run/docker.sock \
-                                -v trivy_cache:/root/.cache/trivy \
-                                -v trivy_javadb_cache:/root/.cache/trivy-java-db \
-                                -e TRIVY_TIMEOUT=30m \
-                                -v $(pwd):/project \
-                                aquasec/trivy:latest \
-                                image ${IMAGE_NAME}:${BUILD_ID} \
-                                --exit-code 1 \
-                                --severity CRITICAL,HIGH \
-                                --ignore-unfixed \
-                                --timeout 30m \
-                                --format json \
-                                --output /project/trivy-report.json
-
-                        '''
-
-                    } catch (err) {
-                        error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
-                    }
-                }
-
+                sh '''
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        -v trivy_cache:/root/.cache/trivy \
+                        -v $(pwd):/project \
+                        aquasec/trivy:latest \
+                        image ${IMAGE_NAME}:${BUILD_ID} \
+                        --exit-code 1 \
+                        --severity CRITICAL,HIGH \
+                        --ignore-unfixed \
+                        --format json \
+                        --output /project/trivy-report.json
+                '''
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
-
             }
         }
 
@@ -193,28 +148,22 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Cleanup Docker') {
             steps {
-                script {
-                    // Supprime l'image locale après le push/
-                    sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
-                    sh "docker rmi ${IMAGE_NAME}:latest || true"
-                    
-                    // Optionnel : Nettoyage des images "<none>" (dangling)
-                    sh "docker image prune -f || true"
-                }
+                sh "docker rmi ${IMAGE_NAME}:${env.BUILD_ID} || true"
+                sh "docker rmi ${IMAGE_NAME}:latest || true"
+                sh "docker image prune -f || true"
             }
         }
 
-        stage('Apply Kubernetes Files') {
+        stage('Deploy to Kubernetes') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
                     sh """
                         cat k8s/${SERVICE_NAME}/deployment.yaml | \
                         sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
                         kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
-                        # kubectl apply -f k8s/ingress.yaml
                     """
                 }
             }
@@ -231,62 +180,30 @@ pipeline {
 
         stage('Git Tag') {
             when {
-                branch 'main'  // on ne tag que sur la branche main
+                branch 'main'
             }
             steps {
                 script {
-                    def versionTag = "v${env.BUILD_NUMBER}"  // Exemple : v27
-
-                    // Configure l'utilisateur Git si nécessaire (utile dans Jenkins agents)
+                    def versionTag = "v${env.BUILD_NUMBER}"
                     sh 'git config user.name "Jenkins CI"'
                     sh 'git config user.email "jenkins@example.com"'
-
-                    // Crée le tag et le pousse sur le repo distant
                     sh "git tag ${versionTag}"
                     sh "git push origin ${versionTag}"
-
-                    echo "✅ Git tag ${versionTag} created and pushed."
                 }
             }
         }
-
     }
 
     post {
-        success {
-            slackSend (
-                channel: "${env.SLACK_CHANNEL}",
-                message: "✅ *${env.JOB_NAME}* #${env.BUILD_NUMBER} a réussi : ${env.BUILD_URL}",
-                color: 'good'
-            )
-        }
-
-        failure {
-            slackSend (
-                channel: "${env.SLACK_CHANNEL}",
-                message: "❌ *${env.JOB_NAME}* #${env.BUILD_NUMBER} a échoué : ${env.BUILD_URL}",
-                color: 'danger'
-            )
-        }
-
         always {
-            echo 'Pipeline terminé.'
+            archiveArtifacts artifacts: '**/coverage.xml,**/test-results.xml', allowEmptyArchive: true
+            echo "📦 Build #${env.BUILD_NUMBER} completed"
+        }
+        success {
+            echo '✅ Pipeline completed successfully'
+        }
+        failure {
+            echo '❌ Pipeline failed'
         }
     }
-
-
-    /*post {
-        always {
-            script {
-                echo "🧾 Pipeline completed on build #${env.BUILD_NUMBER}"
-                archiveArtifacts artifacts: 'login-service/coverage/**', allowEmptyArchive: true
-            }
-        }
-        success {
-            echo '✅ Build succeeded!'
-        }
-        failure {
-            echo '❌ Build failed!'
-        }
-    }*/
 }
