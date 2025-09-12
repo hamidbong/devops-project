@@ -1,0 +1,53 @@
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(135deg,#0f172a,#071033);
+  color: #e6eef8;
+  margin: 0;
+  height: 100vh;
+}
+
+.container {
+  max-width: 720px;
+  margin: 6rem auto;
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #9be7ff;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  background: linear-gradient(180deg,#10b981,#059669);
+  border: none;
+  padding: 0.9rem 1.2rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  color: white;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+  transition: transform .12s ease;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.info {
+  margin-top: 1.8rem;
+  font-size: 1.2rem;
+  background: rgba(255,255,255,0.03);
+  padding: 1rem;
+  border-radius: 8px;
+  display: inline-block;
+}
