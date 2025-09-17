@@ -19,6 +19,24 @@ pipeline {
             }
         }
 
+        stage('Run Tests') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    // Assurez-vous que venv et les dépendances sont installées
+                    sh '''
+                        python -m venv venv || true
+                        . venv/bin/activate
+                        pip install -r requirements.txt
+                        pip install pytest pytest-cov
+                        # Exécute les tests et génère le rapport de couverture JUnit et Coverage
+                        pytest --cov=./ --cov-report=xml:coverage.xml --junitxml=test-results.xml -v
+                    '''
+                }
+                // Archive les résultats pour consultation
+                archiveArtifacts artifacts: "${SERVICE_NAME}/test-results.xml,${SERVICE_NAME}/coverage.xml", allowEmptyArchive: true
+            }
+        }
+
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
