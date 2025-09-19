@@ -37,30 +37,37 @@ resource "local_file" "ssh_private_key" {
 # Groupe de sécurité
 ######################
 
-resource "openstack_compute_secgroup_v2" "webserver_sg" {
+resource "openstack_networking_secgroup_v2" "webserver_sg" {
   name        = "webserver-security-group"
   description = "Security group for web servers"
+}
 
-  rule {
-    from_port   = 22
-    to_port     = 22
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
+resource "openstack_networking_secgroup_rule_v2" "ssh_rule" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 22
+  port_range_max    = 22
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
+}
 
-  rule {
-    from_port   = 80
-    to_port     = 80
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
+resource "openstack_networking_secgroup_rule_v2" "http_rule" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
+}
 
-  rule {
-    from_port   = -1
-    to_port     = -1
-    ip_protocol = "icmp"
-    cidr        = "0.0.0.0/0"
-  }
+resource "openstack_networking_secgroup_rule_v2" "icmp_rule" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
 }
 
 ######################
@@ -74,7 +81,7 @@ resource "openstack_compute_instance_v2" "k8s_worker" {
   image_name      = "ubuntu_22.04_img"
   flavor_name     = "m1.devops"
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
-  security_groups = [openstack_compute_secgroup_v2.webserver_sg.name]
+  security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
 
   power_state = "active"  # Changé de "shutoff" à "active"
 
@@ -110,7 +117,7 @@ resource "openstack_compute_instance_v2" "k8s_master" {
   image_name      = "ubuntu_22.04_img"  # Vérifie que cette image existe
   flavor_name     = "m1.devops"         # Vérifie que ce flavor existe
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
-  security_groups = [openstack_compute_secgroup_v2.webserver_sg.name]
+  security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
 
   # CORRECTION : Réseau correct
   network {
