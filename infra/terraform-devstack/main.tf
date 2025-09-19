@@ -68,16 +68,18 @@ resource "openstack_compute_secgroup_v2" "webserver_sg" {
 ######################
 
 resource "openstack_compute_instance_v2" "k8s_worker" {
-#  name            = "webservers2"
-  count           = 2
-  name            = "k8s-worker-${count.index + 1}"
-  image_name      = "ubuntu_22.04_img"  # ⚠️ assure-toi que cette image existe dans OpenStack
-  flavor_name     = "m2.devops"
+#  count           = 2
+#  name            = "k8s-worker-${count.index + 1}"
+  name            = "k8s-worker-1"
+  image_name      = "ubuntu_22.04_img"
+  flavor_name     = "m1.devops"
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_compute_secgroup_v2.webserver_sg.name]
 
+  power_state = "active"  # Changé de "shutoff" à "active"
+
   network {
-    uuid = "55ed18af-9229-40b1-9c2b-d89d275ecf5d"  # ⚠️ remplace par ton réseau
+    name = "shared"
   }
 
   user_data = <<-EOF
@@ -86,39 +88,52 @@ resource "openstack_compute_instance_v2" "k8s_worker" {
       - name: ubuntu
         groups: sudo
         shell: /bin/bash
-        sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-        ssh_authorized_keys:
-          - ${tls_private_key.ssh_key.public_key_openssh}
+        sudo: ['ALL=(ALL) NOPASSWD:ALL']
     ssh_pwauth: false
     disable_root: true
   EOF
+
+  timeouts {
+    create = "10m"
+    delete = "10m"
+  }
+
+  lifecycle {
+    ignore_changes = [power_state]
+  }
 }
 
 resource "openstack_compute_instance_v2" "k8s_master" {
-#  name            = "webservers2"
   name            = "k8s-master"
-  image_name      = "ubuntu_22.04_img"  # ⚠️ assure-toi que cette image existe dans OpenStack
-  flavor_name     = "m2.devops"
+  image_name      = "ubuntu_22.04_img"  # Vérifie que cette image existe
+  flavor_name     = "m1.devops"         # Vérifie que ce flavor existe
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_compute_secgroup_v2.webserver_sg.name]
 
+  # CORRECTION : Réseau correct
   network {
-    uuid = "55ed18af-9229-40b1-9c2b-d89d275ecf5d"  # ⚠️ remplace par ton réseau
+    name = "shared"
   }
 
+  # CORRECTION : user_data simplifié et sécurisé
   user_data = <<-EOF
     #cloud-config
     users:
       - name: ubuntu
         groups: sudo
         shell: /bin/bash
-        sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-        ssh_authorized_keys:
-          - ${tls_private_key.ssh_key.public_key_openssh}
+        sudo: ['ALL=(ALL) NOPASSWD:ALL']
     ssh_pwauth: false
     disable_root: true
   EOF
+
+  timeouts {
+    create = "10m"
+    delete = "10m"
+  }
 }
+
+
 
 
 ######################
@@ -129,17 +144,28 @@ resource "openstack_compute_instance_v2" "k8s_master" {
 #  value = openstack_compute_instance_v2.k8s-worker.access_ip_v4
 #}
 
-#output "worker_ips_2" {
-#  value = openstack_compute_instance_v2.k8s-worker-2.access_ip_v4
-#}
+output "worker_ip" {
+  value = openstack_compute_instance_v2.k8s_worker.access_ip_v4
+}
 
-output "master_public_ip" {
+output "k8s_worker_floating_ip" {
+  value = openstack_networking_floatingip_v2.fip_k8s_worker.address
+}
+
+output "master_ip" {
   value = openstack_compute_instance_v2.k8s_master.access_ip_v4
 }
 
+output "k8s_master_floating_ip" {
+  value = openstack_networking_floatingip_v2.fip_k8s_master.address
+}
 
 output "jenkins_ip" {
   value = openstack_compute_instance_v2.jenkins_server.access_ip_v4
+}
+
+output "jenkins_server_floating_ip" {
+  value = openstack_networking_floatingip_v2.fip_jenkins.address
 }
 
 ######################
@@ -179,12 +205,12 @@ resource "openstack_compute_secgroup_v2" "jenkins_sg" {
 resource "openstack_compute_instance_v2" "jenkins_server" {
   name            = "jenkins-server"
   image_name      = "ubuntu_22.04_img"
-  flavor_name     = "m1.medium"
+  flavor_name     = "m2.devops"
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_compute_secgroup_v2.jenkins_sg.name]
 
   network {
-    uuid = "55ed18af-9229-40b1-9c2b-d89d275ecf5d"
+    name = "shared"
   }
 
   user_data = <<-EOF
@@ -199,4 +225,39 @@ resource "openstack_compute_instance_v2" "jenkins_server" {
     ssh_pwauth: false
     disable_root: true
   EOF
+
+  timeouts {
+    create = "10m"
+    delete = "10m"
+  }
+}
+
+resource "openstack_networking_floatingip_v2" "fip_jenkins" {
+  pool = "public"   # Nom du réseau externe
+}
+
+# 3. Associer la Floating IP à l’instance
+resource "openstack_compute_floatingip_associate_v2" "fip_assoc_jenkins" {
+  floating_ip = openstack_networking_floatingip_v2.fip_jenkins.address
+  instance_id = openstack_compute_instance_v2.jenkins_server.id
+}
+
+resource "openstack_networking_floatingip_v2" "fip_k8s_master" {
+  pool = "public"   # Nom du réseau externe
+}
+
+# 3. Associer la Floating IP à l’instance
+resource "openstack_compute_floatingip_associate_v2" "fip_assoc_k8s_master" {
+  floating_ip = openstack_networking_floatingip_v2.fip_k8s_master.address
+  instance_id = openstack_compute_instance_v2.k8s_master.id
+}
+
+resource "openstack_networking_floatingip_v2" "fip_k8s_worker" {
+  pool = "public"   # Nom du réseau externe
+}
+
+# 3. Associer la Floating IP à l’instance
+resource "openstack_compute_floatingip_associate_v2" "fip_assoc_k8s_worker" {
+  floating_ip = openstack_networking_floatingip_v2.fip_k8s_worker.address
+  instance_id = openstack_compute_instance_v2.k8s_worker.id
 }
