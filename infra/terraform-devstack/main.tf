@@ -88,7 +88,9 @@ resource "openstack_compute_instance_v2" "k8s_worker" {
       - name: ubuntu
         groups: sudo
         shell: /bin/bash
-        sudo: ['ALL=(ALL) NOPASSWD:ALL']
+        sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+        ssh_authorized_keys:
+          - ${tls_private_key.ssh_key.public_key_openssh}
     ssh_pwauth: false
     disable_root: true
   EOF
@@ -122,7 +124,9 @@ resource "openstack_compute_instance_v2" "k8s_master" {
       - name: ubuntu
         groups: sudo
         shell: /bin/bash
-        sudo: ['ALL=(ALL) NOPASSWD:ALL']
+        sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+        ssh_authorized_keys:
+          - ${tls_private_key.ssh_key.public_key_openssh}
     ssh_pwauth: false
     disable_root: true
   EOF
