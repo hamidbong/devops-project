@@ -2,136 +2,183 @@ def buildResults = [:]
 def buildState = [services: [:]]
 
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    SERVICES = 'service-node,service-python,frontend-react,service-java' // Liste dess services
-    BUILD_STATE_FILE = '.build-state.txt'
-  }
+    environment {
+        SERVICES = 'service-node,service-python,frontend-react,service-java'
+        BUILD_STATE_FILE = '.build-state.txt'
+    }
 
-  stages {
-    stage('Préparation') {
-      steps {
-        script {
-          try {
-            step([
-              $class: 'CopyArtifact',
-              projectName: env.JOB_NAME,
-              selector: lastSuccessful(),
-              filter: env.BUILD_STATE_FILE,
-              target: '.',
-              flatten: true
-            ])
-            echo "✅ Artefact récupéré avec succès"
-          } catch (Exception e) {
-            echo "⚠️ Impossible de restaurer l'artefact : ${e.message}"
-          }
+    stages {
+        stage('Préparation') {
+            steps {
+                script {
+                    // 🔁 Tentative de récupération de l'artefact précédent
+                    try {
+                        copyArtifacts(
+                            projectName: env.JOB_NAME,
+                            selector: specific(lastSuccessfulBuildId()),
+                            filter: env.BUILD_STATE_FILE,
+                            target: '.',
+                            flatten: true
+                        )
+                        echo "✅ Artefact récupéré avec succès"
+                    } catch (Exception e) {
+                        echo "⚠️ Impossible de restaurer l'artefact : ${e.message}"
+                    }
 
-          // 🔁 Charger les services en échec précédent
-          def previousFailures = [] as Set
-          if (fileExists(env.BUILD_STATE_FILE)) {
-            readFile(env.BUILD_STATE_FILE).trim().split('\n').each { line ->
-              def parts = line.split(':', 5)
-              if (parts.size() == 5 && parts[1] == 'FAILURE') {
-                previousFailures << parts[0]
-              }
+                    // 🔍 Détection des fichiers modifiés via Git
+                    def changedFiles = []
+                    try {
+                        def gitDiff = sh(
+                            script: 'git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-tree -r HEAD --name-only',
+                            returnStdout: true
+                        ).trim()
+                        
+                        changedFiles = gitDiff ? gitDiff.split('\n') : []
+                        echo "🔍 Fichiers modifiés détectés : ${changedFiles.size()}"
+                    } catch (Exception e) {
+                        echo "⚠️ Erreur lors de la détection des changements : ${e.message}"
+                        changedFiles = []
+                    }
+
+                    // 🧠 Charger les services précédemment en échec
+                    def previousFailures = [] as Set
+                    if (fileExists(env.BUILD_STATE_FILE)) {
+                        def stateContent = readFile(env.BUILD_STATE_FILE).trim()
+                        if (stateContent) {
+                            stateContent.split('\n').each { line ->
+                                def parts = line.split(':', 5)
+                                if (parts.size() >= 2 && parts[1] == 'FAILURE') {
+                                    previousFailures << parts[0]
+                                }
+                            }
+                        }
+                        echo "⚠️ Services précédemment en échec : ${previousFailures}"
+                    }
+
+                    // 🎯 Déterminer les services affectés
+                    def services = env.SERVICES.split(',').collect { it.trim() } as Set
+                    def affectedServices = services.findAll { service ->
+                        changedFiles.any { file -> 
+                            file.startsWith("${service}/") || 
+                            file.contains("/${service}/")
+                        }
+                    } as Set
+                    
+                    // Ajouter les services précédemment en échec
+                    affectedServices.addAll(previousFailures)
+
+                    if (affectedServices.isEmpty()) {
+                        echo "ℹ️ Aucun service affecté détecté, construction de tous les services"
+                        affectedServices = services
+                    }
+
+                    echo "🚀 Services à builder : ${affectedServices}"
+                    env.AFFECTED_SERVICES = affectedServices.join(',')
+                }
             }
-            echo "⚠️ Services échoués précédemmentt : ${previousFailures}"
-          } else {
-            echo "ℹ️ Aucun fichier d'état trouvé"
-          }
-
-          // 🔍 Détection des fichiers modifiés via Git
-          def changedFiles = []
-          try {
-            def gitPrevious = sh(script: 'git rev-parse HEAD~1 || echo HEAD', returnStdout: true).trim()
-            def gitCurrent = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-            def diffOutput = sh(script: "git diff --name-only ${gitPrevious} ${gitCurrent} || echo ''", returnStdout: true).trim()
-            changedFiles = diffOutput ? diffOutput.split('\n').findAll { it.trim() } : []
-            echo "🔍 Fichiers modifiés : ${changedFiles}"
-          } catch (Exception e) {
-            echo "⚠️ Erreur détection changements : ${e.message}"
-          }
-
-          // 🧠 Déterminer les services affectés
-          def services = env.SERVICES.split(',').collect { it.trim() } as Set
-          def affectedServices = services.findAll { service ->
-            changedFiles.any { file -> file.startsWith("${service}/") }
-          } as Set
-          affectedServices.addAll(previousFailures)
-
-          echo "🚀 Services à builder : ${affectedServices}"
-          env.AFFECTED_SERVICES = affectedServices.join(',')
         }
-      }
-    }
 
-    stage('Build Microservices') {
-      steps {
-        script {
-          def servicesToBuild = env.AFFECTED_SERVICES.split(',').collect { it.trim() }.findAll { it }
-          if (servicesToBuild.isEmpty()) {
-            echo "ℹ️ Aucun service à builder"
-          } else {
-            servicesToBuild.each { service ->
-              echo "🚀 Déclenchement du job pour ${service}"
-              def result = build job: "${service}/main",
-                                wait: true,
-                                propagate: false,
-                                parameters: []
+        stage('Build Microservices') {
+            steps {
+                script {
+                    def servicesToBuild = env.AFFECTED_SERVICES.split(',').collect { it.trim() }.findAll { it }
+                    
+                    if (servicesToBuild.isEmpty()) {
+                        echo "ℹ️ Aucun service à builder"
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
 
-              def status = result.result
-              echo "🔎 Résultat ${service} : ${status}"
+                    parallel servicesToBuild.collectEntries { service ->
+                        ["${service}": {
+                            stage("Build ${service}") {
+                                echo "🚀 Déclenchement du job pour ${service}"
+                                try {
+                                    def result = build(
+                                        job: "${service}-pipeline",
+                                        wait: true,
+                                        propagate: false,
+                                        parameters: []
+                                    )
 
-              buildResults[service] = status
-              buildState.services[service] = [
-                status: status,
-                buildNumber: result.number,
-                buildUrl: result.absoluteUrl,
-                timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-              ]
+                                    def status = result.result.toString()
+                                    echo "🔎 Résultat ${service} : ${status}"
+
+                                    buildResults[service] = status
+                                    buildState.services[service] = [
+                                        status: status,
+                                        buildNumber: result.number,
+                                        buildUrl: result.absoluteUrl,
+                                        timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                                    ]
+
+                                } catch (Exception e) {
+                                    echo "❌ Erreur lors du build de ${service} : ${e.message}"
+                                    buildResults[service] = 'FAILURE'
+                                    buildState.services[service] = [
+                                        status: 'FAILURE',
+                                        buildNumber: currentBuild.number,
+                                        buildUrl: currentBuild.absoluteUrl,
+                                        timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                                    ]
+                                }
+                            }
+                        }]
+                    }
+                }
             }
+        }
 
-            // 💾 Sauvegarde de l’état sous forme texte
-            def lines = buildState.services.collect { svc, info ->
-              "${svc}:${info.status}:${info.buildNumber}:${info.buildUrl}:${info.timestamp}"
+        stage('Sauvegarde État') {
+            steps {
+                script {
+                    // 💾 Sauvegarde de l'état
+                    def lines = buildState.services.collect { svc, info ->
+                        "${svc}:${info.status}:${info.buildNumber}:${info.buildUrl}:${info.timestamp}"
+                    }
+                    writeFile file: env.BUILD_STATE_FILE, text: lines.join('\n')
+                    archiveArtifacts artifacts: env.BUILD_STATE_FILE, fingerprint: true
+                    echo "✅ État sauvegardé dans ${env.BUILD_STATE_FILE}"
+                }
             }
-            writeFile file: env.BUILD_STATE_FILE, text: lines.join('\n')
-            echo "✅ État texte sauvegardé dans ${env.BUILD_STATE_FILE}"
-          }
         }
-      }
-    }
-  }
-
-  post {
-    failure {
-      echo "❌ Pipeline orchestrateur échoué."
     }
 
-    always {
-      archiveArtifacts artifacts: env.BUILD_STATE_FILE, fingerprint: true
-      echo "📝 Résumé des builds :"
-      script {
-        if (buildResults) {
-          buildResults.each { service, result ->
-            echo "🔎 ${service} : ${result}"
-          }
+    post {
+        always {
+            echo "📊 Résumé final des builds :"
+            script {
+                if (buildResults) {
+                    buildResults.each { service, result ->
+                        echo "🔎 ${service} : ${result}"
+                    }
 
-          def successCount = buildResults.count { k, v -> v == 'SUCCESS' }
-          def failureCount = buildResults.count { k, v -> v == 'FAILURE' }
-          def abortedCount = buildResults.count { k, v -> v == 'ABORTED' }
+                    def successCount = buildResults.count { k, v -> v == 'SUCCESS' }
+                    def failureCount = buildResults.count { k, v -> v == 'FAILURE' }
+                    def unstableCount = buildResults.count { k, v -> v == 'UNSTABLE' }
+                    def abortedCount = buildResults.count { k, v -> v == 'ABORTED' }
 
-          echo "📊 TOTAL: ${buildResults.size()}, SUCCÈS: ${successCount}, ÉCHECS: ${failureCount}, ABANDONNÉS: ${abortedCount}"
-        } else {
-          echo "ℹ️ Aucun résultat de build à afficher."
+                    echo "📊 TOTAL: ${buildResults.size()}, SUCCÈS: ${successCount}, ÉCHECS: ${failureCount}, INSTABLES: ${unstableCount}, ABANDONNÉS: ${abortedCount}"
+                    
+                    // Définir le résultat global du pipeline
+                    if (failureCount > 0) {
+                        currentBuild.result = 'FAILURE'
+                    } else if (unstableCount > 0) {
+                        currentBuild.result = 'UNSTABLE'
+                    } else {
+                        currentBuild.result = 'SUCCESS'
+                    }
+                } else {
+                    echo "ℹ️ Aucun résultat de build à afficher."
+                }
+            }
         }
 
-        if (fileExists(env.BUILD_STATE_FILE)) {
-          echo "📂 Contenu du fichier d'état texte :"
-          echo readFile(env.BUILD_STATE_FILE)
+        cleanup {
+            // Nettoyage des fichiers temporaires
+            cleanWs()
         }
-      }
     }
-  }
 }
