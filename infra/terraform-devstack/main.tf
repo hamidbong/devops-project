@@ -75,18 +75,17 @@ resource "openstack_networking_secgroup_rule_v2" "icmp_rule" {
 ######################
 
 resource "openstack_compute_instance_v2" "k8s_worker" {
-#  count           = 2
-#  name            = "k8s-worker-${count.index + 1}"
-  name            = "k8s-worker-1"
-  image_name      = "ubuntu_22.04_img"
-  flavor_name     = "m1.devops"
+  count           = 2
+  name            = "k8s-worker-${count.index + 1}"
+  image_name      = "ubuntu-server24.04"
+  flavor_name     = "m1.small"
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
 
   power_state = "active"  # Changé de "shutoff" à "active"
 
   network {
-    name = "shared"
+    name = "internal"
   }
 
   user_data = <<-EOF
@@ -114,14 +113,14 @@ resource "openstack_compute_instance_v2" "k8s_worker" {
 
 resource "openstack_compute_instance_v2" "k8s_master" {
   name            = "k8s-master"
-  image_name      = "ubuntu_22.04_img"  # Vérifie que cette image existe
-  flavor_name     = "m1.devops"         # Vérifie que ce flavor existe
+  image_name      = "ubuntu-server24.04"  # Vérifie que cette image existe
+  flavor_name     = "m1.small"         # Vérifie que ce flavor existe
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
 
   # CORRECTION : Réseau correct
   network {
-    name = "shared"
+    name = "internal"
   }
 
   # CORRECTION : user_data simplifié et sécurisé
@@ -145,22 +144,20 @@ resource "openstack_compute_instance_v2" "k8s_master" {
 }
 
 
-
-
 ######################
 # Affichage de l'adresse IP
 ######################
 
-#output "worker_ips_1" {
-#  value = openstack_compute_instance_v2.k8s-worker.access_ip_v4
-#}
-
 output "worker_ip" {
-  value = openstack_compute_instance_v2.k8s_worker.access_ip_v4
+  value = openstack_compute_instance_v2.k8s_worker[*].access_ip_v4
 }
 
-output "k8s_worker_floating_ip" {
-  value = openstack_networking_floatingip_v2.fip_k8s_worker.address
+output "k8s_worker_1_floating_ip" {
+  value = openstack_networking_floatingip_v2.fip_k8s_worker[0].address
+}
+
+output "k8s_worker_2_floating_ip" {
+  value = openstack_networking_floatingip_v2.fip_k8s_worker[1].address
 }
 
 output "master_ip" {
@@ -215,13 +212,13 @@ resource "openstack_compute_secgroup_v2" "jenkins_sg" {
 
 resource "openstack_compute_instance_v2" "jenkins_server" {
   name            = "jenkins-server"
-  image_name      = "ubuntu_22.04_img"
-  flavor_name     = "m2.devops"
+  image_name      = "ubuntu-server24.04"
+  flavor_name     = "m1.small"
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_compute_secgroup_v2.jenkins_sg.name]
 
   network {
-    name = "shared"
+    name = "internal"
   }
 
   user_data = <<-EOF
@@ -248,27 +245,30 @@ resource "openstack_networking_floatingip_v2" "fip_jenkins" {
 }
 
 # 3. Associer la Floating IP à l’instance
+
 resource "openstack_compute_floatingip_associate_v2" "fip_assoc_jenkins" {
   floating_ip = openstack_networking_floatingip_v2.fip_jenkins.address
   instance_id = openstack_compute_instance_v2.jenkins_server.id
 }
 
+# Floating IP pour le master K8s
 resource "openstack_networking_floatingip_v2" "fip_k8s_master" {
-  pool = "public"   # Nom du réseau externe
+  pool = "public"
 }
 
-# 3. Associer la Floating IP à l’instance
 resource "openstack_compute_floatingip_associate_v2" "fip_assoc_k8s_master" {
   floating_ip = openstack_networking_floatingip_v2.fip_k8s_master.address
   instance_id = openstack_compute_instance_v2.k8s_master.id
 }
 
+# Floating IPs pour les workers K8s - CORRIGÉ
 resource "openstack_networking_floatingip_v2" "fip_k8s_worker" {
-  pool = "public"   # Nom du réseau externe
+  count = 2
+  pool  = "public"
 }
 
-# 3. Associer la Floating IP à l’instance
 resource "openstack_compute_floatingip_associate_v2" "fip_assoc_k8s_worker" {
-  floating_ip = openstack_networking_floatingip_v2.fip_k8s_worker.address
-  instance_id = openstack_compute_instance_v2.k8s_worker.id
+  count = 2
+  instance_id = openstack_compute_instance_v2.k8s_worker[count.index].id
+  floating_ip = openstack_networking_floatingip_v2.fip_k8s_worker[count.index].address
 }
