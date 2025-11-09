@@ -13,7 +13,7 @@ pipeline {
         stage('Préparation') {
             steps {
                 script {
-                    // 🔁 Tentative de récupération de l'artefact précédent
+                    // 🔁 Tentative de récupération de l'artefact précédent...
                     try {
                         copyArtifacts(
                             projectName: env.JOB_NAME,
