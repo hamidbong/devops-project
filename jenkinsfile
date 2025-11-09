@@ -5,7 +5,7 @@ pipeline {
     agent any
 
     environment {
-        SERVICES = 'service-node,service-python,frontend-react,service-java'
+        SERVICES = 'service-node,service-python,frontend-react,gestion-prod-service'
         BUILD_STATE_FILE = '.build-state.txt'
     }
 
