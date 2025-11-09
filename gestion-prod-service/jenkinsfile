@@ -34,7 +34,7 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency-Check') {
+        /*stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -58,6 +58,44 @@ pipeline {
 
                    // Archivage pour Jenkins
                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                }
+            }
+        }*/
+        stage('OWASP Dependency-Check') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    script {
+                        try {
+                            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                                dependencyCheck additionalArguments: """
+                                    -s . 
+                                    -o "./dependency-check-report" 
+                                    -f ALL 
+                                    --prettyPrint
+                                    --nvdApiKey=${NVD_API_KEY}
+                                    --nvdApiDelay 5000
+                                    --cveValidForHours 48
+                                    --nvdApiMaxRetryCount 5
+                                    --nvdApiRetryDelay 60""",
+                                    odcInstallation: 'DependencyCheck'
+                            }
+                        } catch (Exception e) {
+                            echo "Dependency-Check online scan failed, trying offline mode..."
+                            dependencyCheck additionalArguments: '''
+                                -s . 
+                                -o "./dependency-check-report" 
+                                -f ALL 
+                                --prettyPrint
+                                --noupdate''',
+                                odcInstallation: 'DependencyCheck'
+                        }
+                    }
+
+                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                        failedTotalCritical: 1,
+                        unstableTotalHigh: 1
+
+                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
                 }
             }
         }
