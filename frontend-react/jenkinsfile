@@ -1,8 +1,6 @@
-def SERVICE_NAME = 'frontend-react'  // adapter à chaque fichierrrrr
-
+def SERVICE_NAME = 'frontend-react'  // adapter à chaque fichier
 
 pipeline {
-    
     agent any
 
     environment {
@@ -12,21 +10,12 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        /*stage('Install & Generate Lock') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh 'npm ci --no-audit'
-                    sh 'rm -f package-lock.json && npm install --package-lock-only --no-audit'
-                }
-            }
-        }*/
         stage('Install & Verify Lock') {
             steps {
                 dir("${SERVICE_NAME}") {
@@ -44,7 +33,6 @@ pipeline {
                 }
             }   
         }
-        
 
         stage('OWASP Dependency-Check') {
             steps {
@@ -57,11 +45,6 @@ pipeline {
                             --prettyPrint''',
                             odcInstallation: 'DependencyCheck'
                     }
-
-                    /*dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
-                        failedTotalCritical: 1,
-                        unstableTotalHigh: 1*/
-
                     archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
                 }
             }
@@ -77,7 +60,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('SonarQube Analysis') {
             steps {
@@ -118,7 +100,7 @@ pipeline {
                             -v $(pwd):/scan \
                             aquasec/trivy fs \
                             --security-checks vuln,config \
-                            --output /project/trivy-Filesystem-report.json
+                            --output /project/trivy-Filesystem-report.json \
                             --severity CRITICAL \
                             /scan
                     '''
@@ -169,16 +151,12 @@ pipeline {
                                 --timeout 30m \
                                 --format json \
                                 --output /project/trivy-report.json
-
                         '''
-
                     } catch (err) {
                         error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
                     }
                 }
-
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
-
             }
         }
 
@@ -250,15 +228,12 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
         always {
-            script {
-                echo "🧾 Pipeline completed on build #${env.BUILD_NUMBER}"
-                archiveArtifacts artifacts: 'frontend-react/coverage/**', allowEmptyArchive: true
-            }
+            echo "🧾 Pipeline completed on build #${env.BUILD_NUMBER}"
+            // Archive artifacts are now done within their respective stages
         }
         success {
             echo '✅ Build succeeded!'
