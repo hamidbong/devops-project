@@ -38,23 +38,30 @@ pipeline {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                        dependencyCheck additionalArguments: '''
-                            -s . 
-                            -o "./dependency-check-report" 
-                            -f ALL 
+
+                        // Analyse avec Dependency-Check
+                        dependencyCheck additionalArguments: """
+                            -s .
+                            -o "./dependency-check-report"
+                            -f ALL
                             --prettyPrint
-                            --nvdApiKey=${NVD_API_KEY}''',
-                            odcInstallation: 'DependencyCheck'
+                            --nvdApiKey=\$NVD_API_KEY
+                            --nvdApiDelay 10000
+                            """,
+                        odcInstallation: 'DependencyCheck'
                     }
 
+                    // Publication du rapport
                     dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
                         failedTotalCritical: 1,
                         unstableTotalHigh: 1
 
-                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                   // Archivage pour Jenkins
+                   archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
                 }
             }
         }
+
 
         stage('Vérification vulnérabilités') {
             steps {
