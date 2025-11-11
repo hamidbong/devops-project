@@ -77,7 +77,7 @@ pipeline {
                                     --cveValidForHours 48
                                     --nvdApiMaxRetryCount 5
                                     --nvdApiRetryDelay 60''',
-                                    odcInstallation: 'DependencyCheck'
+                                    odcInstallation: 'dependency-check-10.0.3'
                             }
                         } catch (Exception e) {
                             echo "Dependency-Check online scan failed, trying offline mode..."
