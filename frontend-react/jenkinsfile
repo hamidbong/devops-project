@@ -50,12 +50,15 @@ pipeline {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dependencyCheck additionalArguments: '''
-                            -s .
-                            -o dependency-check-report
-                            -f ALL
+                            -s . 
+                            -o "./dependency-check-report" 
+                            -f ALL 
                             --prettyPrint
-                            --nvdApiDelay=2000
                             --nvdApiKey=${NVD_API_KEY}
+                            --nvdApiDelay 5000
+                            --cveValidForHours 48
+                            --nvdApiMaxRetryCount 5
+                            --nvdApiRetryDelay 60
                         ''',
                         odcInstallation: 'dependency-check-10.0.3'
                     }
