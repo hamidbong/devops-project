@@ -45,7 +45,7 @@ pipeline {
             }   
         }
 
-        /*stage('OWASP Dependency-Check') {
+        stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -54,34 +54,19 @@ pipeline {
                             -o "./dependency-check-report" 
                             -f ALL 
                             --prettyPrint
-                            --nvdApiDelay=7000
+                            --nvdApiDelay=2000 
                             --nvdApiKey=${NVD_API_KEY}''',
-                            odcInstallation: 'DependencyCheck'
+                            odcInstallation: 'dependency-check-10.0.3'
                     }
-                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
-                }
-            }
-        }*/
 
-        stage('OWASP Dependency-Check') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                        dependencyCheck additionalArguments: """
-                            -s .
-                            -o "./dependency-check-report"
-                            -f ALL
-                            --prettyPrint
-                            --nvdApiKey=${NVD_API_KEY}
-                            --nvdApiDelay=7000
-                        """,
-                        odcInstallation: 'dependency-check-10.0.3'
-                    }
+                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                        failedTotalCritical: 1,
+                        unstableTotalHigh: 1
+
                     archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
                 }
             }
         }
-
 
         stage('Vérification vulnérabilités') {
             steps {
