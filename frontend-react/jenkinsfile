@@ -45,7 +45,7 @@ pipeline {
             }   
         }
 
-        stage('OWASP Dependency-Check') {
+        /*stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -56,6 +56,31 @@ pipeline {
                             --prettyPrint
                             --nvdApiDelay=2000 
                             --nvdApiKey=${NVD_API_KEY}''',
+                            odcInstallation: 'dependency-check-10.0.3'
+                    }
+
+                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
+                        failedTotalCritical: 1,
+                        unstableTotalHigh: 1
+
+                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                }
+            }
+        }*/
+        stage('OWASP Dependency-Check') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                        // Augmenter le timeout et ajouter des paramètres de performance
+                        dependencyCheck additionalArguments: '''
+                            -s . 
+                            -o "./dependency-check-report" 
+                            -f ALL 
+                            --prettyPrint
+                            --nvdApiDelay=3000 
+                            --nvdApiKey=${NVD_API_KEY}
+                            --connectionTimeout=60000
+                            --readTimeout=60000''',
                             odcInstallation: 'dependency-check-10.0.3'
                     }
 
