@@ -34,33 +34,7 @@ pipeline {
             }
         }
 
-        /*stage('OWASP Dependency-Check') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-
-                        // Analyse avec Dependency-Check
-                        dependencyCheck additionalArguments: """
-                            -s .
-                            -o "./dependency-check-report"
-                            -f ALL
-                            --prettyPrint
-                            --nvdApiKey=\$NVD_API_KEY
-                            --nvdApiDelay 10000
-                            """,
-                        odcInstallation: 'DependencyCheck'
-                    }
-
-                    // Publication du rapport
-                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
-                        failedTotalCritical: 1,
-                        unstableTotalHigh: 1
-
-                   // Archivage pour Jenkins
-                   archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
-                }
-            }
-        }*/
+        
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
@@ -68,16 +42,13 @@ pipeline {
                         try {
                             withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                                 dependencyCheck additionalArguments: '''
-                                    -s . 
-                                    -o "./dependency-check-report" 
-                                    -f ALL 
+                                    -s .
+                                    -o dependency-check-report
+                                    -f ALL
                                     --prettyPrint
-                                    --nvdApiKey=${NVD_API_KEY}
-                                    --nvdApiDelay 5000
-                                    --cveValidForHours 48
-                                    --nvdApiMaxRetryCount 5
-                                    --nvdApiRetryDelay 60''',
-                                    odcInstallation: 'dependency-check-10.0.3'
+                                    --nvdApiDelay=2000
+                                    --nvdApiKey=${NVD_API_KEY}''',
+                                odcInstallation: 'dependency-check-10.0.3'
                             }
                         } catch (Exception e) {
                             echo "Dependency-Check online scan failed, trying offline mode..."
