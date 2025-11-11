@@ -48,14 +48,14 @@ pipeline {
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'nvd_api_key')]) {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dependencyCheck additionalArguments: '''
                             -s .
                             -o dependency-check-report
                             -f XML
                             --prettyPrint
-                            --nvdApiDelay=3000
-                            --nvdApiKey=${nvd_api_key}
+                            --nvdApiDelay=2000
+                            --nvdApiKey=${NVD_API_KEY}
                         ''',
                         odcInstallation: 'dependency-check-10.0.3'
                     }
