@@ -95,7 +95,7 @@ pipeline {
                         failedTotalCritical: 1,
                         unstableTotalHigh: 1
 
-                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: false
                 }
             }
         }
