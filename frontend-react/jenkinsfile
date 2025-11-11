@@ -9,7 +9,7 @@ pipeline {
 
     environment {
         SONARQUBE     = 'sonarqube_devops_master_analyse'
-        NVD_API_KEY   = credentials('nvd-api-key')
+        //NVD_API_KEY   = credentials('nvd-api-key')
         IMAGE_NAME    = "hamidbong/frontend-react"
     }
 
