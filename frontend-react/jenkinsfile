@@ -62,15 +62,6 @@ pipeline {
             }
         }*/
 
-        stage('Security Scan') {
-            steps {
-                script {
-                    // Dependency-Check sera disponible dans le PATH
-                    sh 'dependency-check.sh --version'
-                }
-            }
-        }
-
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
