@@ -5,7 +5,6 @@ pipeline {
 
     tools {
         nodejs 'Node18'
-        dependencyCheck 'DependencyCheck'  // Ajoutez cette ligne
     }
 
     environment {
