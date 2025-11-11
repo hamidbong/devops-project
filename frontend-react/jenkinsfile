@@ -66,7 +66,7 @@ pipeline {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                        dependencyCheck additionalArguments: """
+                        dependency-check-10.0.3 additionalArguments: """
                             -s .
                             -o "./dependency-check-report"
                             -f ALL
