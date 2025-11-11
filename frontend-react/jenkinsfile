@@ -14,7 +14,7 @@ pipeline {
     }
 
     stages {
-        
+
         stage('Check versions') {
             steps {
                 sh 'node -v'
@@ -54,7 +54,8 @@ pipeline {
                             -s . 
                             -o "./dependency-check-report" 
                             -f ALL 
-                            --prettyPrint''',
+                            --prettyPrint
+                            --nvdApiKey=${NVD_API_KEY}''',
                             odcInstallation: 'DependencyCheck'
                     }
                     archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
