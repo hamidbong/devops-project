@@ -3,6 +3,10 @@ def SERVICE_NAME = 'frontend-react'  // adapter à chaque fichier
 pipeline {
     agent any
 
+    tools {
+        nodejs 'Node18'
+    }
+
     environment {
         SONARQUBE     = 'sonarqube_devops_master_analyse'
         NVD_API_KEY   = credentials('nvd-api-key')
