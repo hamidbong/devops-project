@@ -72,7 +72,7 @@ pipeline {
                             -f ALL
                             --prettyPrint
                             --nvdApiKey=${NVD_API_KEY}
-                            --nvdApiDelay=6000
+                            --nvdApiDelay=7000
                         """,
                         odcInstallation: 'DependencyCheck'
                     }
