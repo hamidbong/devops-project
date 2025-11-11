@@ -52,7 +52,7 @@ pipeline {
                         dependencyCheck additionalArguments: '''
                             -s .
                             -o dependency-check-report
-                            -f XML
+                            -f ALL
                             --prettyPrint
                             --nvdApiDelay=2000
                             --nvdApiKey=${NVD_API_KEY}
