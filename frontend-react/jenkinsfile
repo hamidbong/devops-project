@@ -45,7 +45,7 @@ pipeline {
             }   
         }
 
-        /*stage('OWASP Dependency-Check') {
+        stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -67,72 +67,7 @@ pipeline {
                     archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: false
                 }
             }
-        }*/
-        stage('OWASP Dependency-Check') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    script {
-                        try {
-                            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                                dependencyCheck additionalArguments: '''
-                                    -s . 
-                                    -o "./dependency-check-report" 
-                                    -f ALL 
-                                    --prettyPrint
-                                    --nvdApiKey=${NVD_API_KEY}
-                                    --nvdApiDelay 5000
-                                    --cveValidForHours 48
-                                    --nvdApiMaxRetryCount 5
-                                    --nvdApiRetryDelay 60''',
-                                    odcInstallation: 'dependency-check-10.0.3'
-                            }
-                        } catch (Exception e) {
-                            echo "Dependency-Check online scan failed, trying offline mode..."
-                            dependencyCheck additionalArguments: '''
-                                -s . 
-                                -o "./dependency-check-report" 
-                                -f ALL 
-                                --prettyPrint
-                                --noupdate''',
-                                odcInstallation: 'dependency-check-10.0.3'
-                        }
-                    }
-
-                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
-                        failedTotalCritical: 1,
-                        unstableTotalHigh: 1
-
-                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: false
-                }
-            }
         }
-
-
-        /*stage('OWASP Dependency-Check') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                        // Augmenter le timeout et ajouter des paramètres de performance
-                        dependencyCheck additionalArguments: '''
-                            -s . 
-                            -o "./dependency-check-report" 
-                            -f ALL 
-                            --prettyPrint
-                            --nvdApiDelay=3000 
-                            --nvdApiKey=${NVD_API_KEY}
-                            --connectionTimeout=60000
-                            --readTimeout=60000''',
-                            odcInstallation: 'dependency-check-10.0.3'
-                    }
-
-                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
-                        failedTotalCritical: 1,
-                        unstableTotalHigh: 1
-
-                    archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
-                }
-            }
-        }*/
 
         stage('Vérification vulnérabilités') {
             steps {
@@ -147,23 +82,28 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
+                withSonarQubeEnv('SonarCloud') { // nom défini dans Jenkins
                     script {
                         def nodePath = sh(returnStdout: true, script: 'which node').trim()
+                        def scannerHome = tool('SonarScanner')
 
                         sh """
-                            ${tool('SonarScanner')}/bin/sonar-scanner \
-                                -Dsonar.projectKey=${SERVICE_NAME} \
-                                -Dsonar.projectName=${SERVICE_NAME} \
-                                -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                                -Dsonar.sources=${SERVICE_NAME} \
-                                -Dsonar.nodejs.executable=${nodePath} \
-                                -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.organization=hamidbong \
+                            -Dsonar.projectKey=${SERVICE_NAME} \
+                            -Dsonar.projectName=${SERVICE_NAME} \
+                            -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                            -Dsonar.sources=${SERVICE_NAME} \
+                            -Dsonar.host.url=https://sonarcloud.io \
+                            -Dsonar.token=${SONAR_AUTH_TOKEN} \
+                            -Dsonar.nodejs.executable=${nodePath} \
+                            -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
                         """
                     }
                 }
             }
         }
+
 
         stage("Quality Gates") {
             steps {
