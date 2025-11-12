@@ -117,19 +117,6 @@ pipeline {
             }
         }
 
-
-
-        /*stage("Quality Gates") {
-            steps {
-                retry(5) {
-                    timeout(time: 1, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
-                    sleep(time: 10, unit: 'SECONDS')
-                }
-            }
-        }*/
-
         stage('Trivy Filesystem Scan') {
             steps {
                 dir("${SERVICE_NAME}") {
