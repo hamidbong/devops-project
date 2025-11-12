@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        SONARQUBE     = 'sonarqube_devops_master_analyse'
+        AUTH_TOKEN_SONAR = credentials('SONAR_AUTH_TOKEN')
         IMAGE_NAME    = "hamidbong/frontend-react"
     }
 
@@ -95,7 +95,7 @@ pipeline {
                             -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                             -Dsonar.sources=${SERVICE_NAME} \
                             -Dsonar.host.url=https://sonarcloud.io \
-                            -Dsonar.token=${SONAR_AUTH_TOKEN} \
+                            -Dsonar.token=${AUTH_TOKEN_SONAR} \
                             -Dsonar.nodejs.executable=${nodePath} \
                             -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
                         """
