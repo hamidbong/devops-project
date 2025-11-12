@@ -82,7 +82,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarCloud') { // nom défini dans Jenkins
+                withSonarQubeEnv('SonarCloud') { // nom défini dans Jenkinssss
                     script {
                         def nodePath = sh(returnStdout: true, script: 'which node').trim()
                         def scannerHome = tool('SonarScanner')
