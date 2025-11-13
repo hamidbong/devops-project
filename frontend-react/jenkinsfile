@@ -48,6 +48,7 @@ pipeline {
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
+                    sh 'pwd && ls -la'
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dependencyCheck additionalArguments: '''
                             -s .
