@@ -1,11 +1,11 @@
 # Étape 1 : Build du frontend avec Node.js
-FROM node:18 AS build
+FROM node:20 AS build
 
 WORKDIR /app
 
 # Copier les fichiers package.json et installer les dépendances
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copier tout le code et build
 COPY . .
@@ -27,3 +27,4 @@ COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
+
