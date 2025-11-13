@@ -146,7 +146,7 @@ pipeline {
             steps {
                 dir("${SERVICE_NAME}") {
                     script {
-                        // Générer un rapport détaillé sans faire échouer le build immédiatement
+                        // Générer un rapport détaillé sans faire échouer le build immédiatementt
                         sh '''
                             docker run --rm \
                                 -v /var/run/docker.sock:/var/run/docker.sock \
