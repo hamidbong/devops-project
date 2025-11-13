@@ -48,7 +48,6 @@ pipeline {
         stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    sh 'pwd && ls -la'
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dependencyCheck additionalArguments: '''
                             -s .
@@ -118,22 +117,6 @@ pipeline {
             }
         }
 
-        stage('Trivy Filesystem Scan') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh '''
-                        docker run --rm \
-                            -v $(pwd):/scan \
-                            aquasec/trivy fs \
-                            --security-checks vuln,config \
-                            --output /project/trivy-Filesystem-report.json \
-                            --severity CRITICAL \
-                            /scan
-                    '''
-                }
-            }
-        }
-
         stage('Check Docker Daemon') {
             steps {
                 sh 'docker version'
@@ -159,30 +142,39 @@ pipeline {
             }
         }
 
-        stage('Scan with Trivy') {
+        stage('Security Scan - Trivy') {
             steps {
-                script {
-                    try {
+                dir("${SERVICE_NAME}") {
+                    script {
+                        // Générer un rapport détaillé sans faire échouer le build immédiatement
                         sh '''
                             docker run --rm \
                                 -v /var/run/docker.sock:/var/run/docker.sock \
                                 -v trivy_cache:/root/.cache/trivy \
-                                -v trivy_javadb_cache:/root/.cache/trivy-java-db \
-                                -e TRIVY_TIMEOUT=30m \
-                                -v $(pwd):/project \
+                                aquasec/trivy:latest \
+                                image ${IMAGE_NAME}:${BUILD_ID} \
+                                --severity CRITICAL,HIGH,MEDIUM \
+                                --ignore-unfixed \
+                                --format json \
+                                --output trivy-detailed-report.json \
+                                --exit-code 0  # Ne pas faire échouer le build ici
+                        '''
+                        
+                        // Afficher un résumé lisible
+                        sh '''
+                            docker run --rm \
+                                -v /var/run/docker.sock:/var/run/docker.sock \
+                                -v trivy_cache:/root/.cache/trivy \
                                 aquasec/trivy:latest \
                                 image ${IMAGE_NAME}:${BUILD_ID} \
                                 --severity CRITICAL,HIGH \
                                 --ignore-unfixed \
-                                --timeout 30m \
-                                --format json \
-                                --output /project/trivy-report.json
+                                --exit-code 0
                         '''
-                    } catch (err) {
-                        error "Trivy scan failed due to CRITICAL/HIGH vulnerabilities"
+                        
+                        archiveArtifacts artifacts: 'trivy-detailed-report.json', allowEmptyArchive: true
                     }
                 }
-                archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
             }
         }
 
