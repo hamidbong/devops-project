@@ -57,7 +57,7 @@ pipeline {
                             --nvdApiDelay=2000
                             --nvdApiKey=${NVD_API_KEY}
                         ''',
-                        odcInstallation: 'dependency-check-10.0.3'
+                        odcInstallation: 'dependency-check-12.1.9'
                     }
 
                     dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
