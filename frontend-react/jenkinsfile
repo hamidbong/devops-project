@@ -94,7 +94,7 @@ pipeline {
                             -Dsonar.projectName=${SERVICE_NAME} \
                             -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                             -Dsonar.sources=${SERVICE_NAME} \
-                            -Dsonar.host.url=https://sonarcloud.io \
+                            -Dsonar.exclusions=node_modules/**,dist/**,build/**,coverage/**,.venv/**,target/** \
                             -Dsonar.token=${AUTH_TOKEN_SONAR} \
                             -Dsonar.nodejs.executable=${nodePath} \
                             -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
