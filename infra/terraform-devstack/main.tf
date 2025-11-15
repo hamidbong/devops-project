@@ -223,6 +223,8 @@ resource "openstack_compute_instance_v2" "jenkins_server" {
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_compute_secgroup_v2.jenkins_sg.name]
 
+  power_state = "active"  # Changé de "shutoff" à "active"
+
   network {
     name = "internal"
   }
@@ -244,6 +246,11 @@ resource "openstack_compute_instance_v2" "jenkins_server" {
     create = "10m"
     delete = "10m"
   }
+
+  lifecycle {
+    ignore_changes = [power_state]
+  }
+
 }
 
 resource "openstack_networking_floatingip_v2" "fip_jenkins" {
