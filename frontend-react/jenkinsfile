@@ -1,10 +1,10 @@
-def SERVICE_NAME = 'frontend-react'  // adapter à chaque fichierrrr
+def SERVICE_NAME = 'frontend-react'  // adapter à chaque fichier
 
 pipeline {
     agent any
 
     tools {
-        nodejs 'Node20'
+        nodejs 'Node22'
     }
 
     environment {
@@ -51,13 +51,13 @@ pipeline {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                         dependencyCheck additionalArguments: '''
                             -s .
-                            -o dependency-check-report
+                            -o ./dependency-check-report
                             -f ALL
                             --prettyPrint
                             --nvdApiDelay=2000
                             --nvdApiKey=${NVD_API_KEY}
                         ''',
-                        odcInstallation: 'dependency-check-10.0.3'
+                        odcInstallation: 'dependency-check-12.1.9'
                     }
 
                     dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml',
@@ -89,12 +89,11 @@ pipeline {
 
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.organization=hamidbong \
                             -Dsonar.projectKey=${SERVICE_NAME} \
                             -Dsonar.projectName=${SERVICE_NAME} \
                             -Dsonar.projectVersion=${env.BUILD_NUMBER} \
                             -Dsonar.sources=${SERVICE_NAME} \
-                            -Dsonar.host.url=https://sonarcloud.io \
+                            -Dsonar.exclusions=node_modules/**,dist/**,build/**,coverage/**,.venv/**,target/** \
                             -Dsonar.token=${AUTH_TOKEN_SONAR} \
                             -Dsonar.nodejs.executable=${nodePath} \
                             -Dsonar.javascript.lcov.reportPaths=${SERVICE_NAME}/coverage/lcov.info
@@ -106,11 +105,13 @@ pipeline {
 
         stage("Quality Gates") {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    script {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                retry(4) {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        script {
+                            def qg = waitForQualityGate()
+                            if (qg.status != 'OK') {
+                                error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                            }
                         }
                     }
                 }
