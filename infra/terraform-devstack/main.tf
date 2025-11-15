@@ -197,6 +197,12 @@ resource "openstack_compute_secgroup_v2" "jenkins_sg" {
     ip_protocol = "tcp"
     cidr        = "0.0.0.0/0"
   }
+  rule {
+    from_port   = 9000
+    to_port     = 9000
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
 
   rule {
     from_port   = -1
