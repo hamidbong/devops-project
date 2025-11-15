@@ -176,6 +176,13 @@ output "jenkins_server_floating_ip" {
   value = openstack_networking_floatingip_v2.fip_jenkins.address
 }
 
+output "jenkins2_ip" {
+  value = openstack_compute_instance_v2.jenkins2_server.access_ip_v4
+}
+
+output "jenkins2_server_floating_ip" {
+  value = openstack_networking_floatingip_v2.fip_jenkins2.address
+}
 ######################
 # Groupe de sécurité Jenkins
 ######################
@@ -240,6 +247,37 @@ resource "openstack_compute_instance_v2" "jenkins_server" {
   }
 }
 
+#ffffffffffff
+
+resource "openstack_compute_instance_v2" "jenkins2_server" {
+  name            = "jenkins2-server"
+  image_name      = "ubuntu-server24.04"
+  flavor_name     = "m1.devops"
+  key_pair        = openstack_compute_keypair_v2.ssh_key.name
+  security_groups = [openstack_compute_secgroup_v2.jenkins_sg.name]
+
+  network {
+    name = "internal"
+  }
+
+  user_data = <<-EOF
+    #cloud-config
+    users:
+      - name: ubuntu
+        groups: sudo
+        shell: /bin/bash
+        sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+        ssh_authorized_keys:
+          - ${tls_private_key.ssh_key.public_key_openssh}
+    ssh_pwauth: false
+    disable_root: true
+  EOF
+
+  timeouts {
+    create = "10m"
+    delete = "10m"
+  }
+}
 resource "openstack_networking_floatingip_v2" "fip_jenkins" {
   pool = "public"   # Nom du réseau externe
 }
@@ -249,6 +287,17 @@ resource "openstack_networking_floatingip_v2" "fip_jenkins" {
 resource "openstack_compute_floatingip_associate_v2" "fip_assoc_jenkins" {
   floating_ip = openstack_networking_floatingip_v2.fip_jenkins.address
   instance_id = openstack_compute_instance_v2.jenkins_server.id
+}
+
+resource "openstack_networking_floatingip_v2" "fip_jenkins2" {
+  pool = "public"   # Nom du réseau externe
+}
+
+# 3. Associer la Floating IP à l’instance
+
+resource "openstack_compute_floatingip_associate_v2" "fip_assoc_jenkins2" {
+  floating_ip = openstack_networking_floatingip_v2.fip_jenkins2.address
+  instance_id = openstack_compute_instance_v2.jenkins_2server.id
 }
 
 # Floating IP pour le master K8s
