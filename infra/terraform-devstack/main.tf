@@ -213,7 +213,7 @@ resource "openstack_compute_secgroup_v2" "jenkins_sg" {
 resource "openstack_compute_instance_v2" "jenkins_server" {
   name            = "jenkins-server"
   image_name      = "ubuntu-server24.04"
-  flavor_name     = "m1.small"
+  flavor_name     = "m1.devops"
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   security_groups = [openstack_compute_secgroup_v2.jenkins_sg.name]
 
