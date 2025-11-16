@@ -177,74 +177,42 @@ pipeline {
         stage('Build Microservices') {
             steps {
                 script {
-                    def servicesToBuild = env.AFFECTED_SERVICES.split(',').collect { it.trim() }.findAll { it }
-                    
+                    def branch = env.BRANCH_NAME ?: 'main'  // Branche actuelle ou 'main'
+                    def servicesToBuild = env.AFFECTED_SERVICES.split(',')
+                                                .collect { it.trim() }
+                                                .findAll { it }
+
                     if (servicesToBuild.isEmpty()) {
                         echo "ℹ️ Aucun service à builder"
                         currentBuild.result = 'SUCCESS'
                         return
                     }
 
+                    // Construction séquentielle pour chaque service
                     servicesToBuild.each { service ->
                         stage("Build ${service}") {
-                            echo "🚀 Déclenchement du job pour ${service}"
-                            
-                            // Liste des noms de jobs possibles à essayer
-                            def possibleJobNames = [
-                                service,
-                                "${service}",
-                                "${service}-pipeline", 
-                                "${service}-build",
-                                "${service}-ci",
-                                "build-${service}"
-                            ]
-                            
-                            def jobFound = false
-                            def lastError = null
-                            
-                            for (jobName in possibleJobNames) {
-                                try {
-                                    echo "🔍 Recherche du job : ${jobName}"
-                                    def job = Jenkins.instance.getItemByFullName(jobName)
-                                    
-                                    // Vérification plus robuste du type de job
-                                    if (job != null && job instanceof hudson.model.Job) {
-                                        echo "✅ Job buildable trouvé : ${jobName}"
-                                        jobFound = true
-                                        
-                                        def result = build(
-                                            job: jobName,
-                                            wait: true,
-                                            propagate: false
-                                        )
+                            def jobName = "${service}/${branch}"
+                            echo "🚀 Déclenchement du job ${jobName}"
 
-                                        def status = result.result.toString()
-                                        echo "🔎 Résultat ${service} : ${status}"
+                            try {
+                                def result = build(
+                                    job: jobName,
+                                    wait: true,
+                                    propagate: false
+                                )
+                                def status = result?.result?.toString() ?: 'FAILURE'
+                                echo "🔎 Résultat ${jobName} : ${status}"
 
-                                        buildResults[service] = status
-                                        buildState.services[service] = [
-                                            status: status,
-                                            buildNumber: result.number,
-                                            buildUrl: result.absoluteUrl,
-                                            timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-                                        ]
-                                        break // Sortir de la boucle si réussi
-                                    } else if (job != null) {
-                                        echo "⚠️ Item trouvé mais non buildable : ${jobName} (type: ${job?.class?.simpleName})"
-                                        continue // Essayer le nom suivant
-                                    } else {
-                                        echo "❌ Job non trouvé : ${jobName}"
-                                    }
-                                } catch (Exception e) {
-                                    lastError = e
-                                    echo "⚠️ Erreur avec le job ${jobName} : ${e.message}"
-                                    // Continuer avec le nom suivant
-                                }
-                            }
-                            
-                            if (!jobFound) {
-                                echo "❌ Aucun job valide trouvé pour ${service}. Noms essayés : ${possibleJobNames}"
-                                
+                                buildResults[service] = status
+                                buildState.services[service] = [
+                                    status: status,
+                                    buildNumber: result.number,
+                                    buildUrl: result.absoluteUrl,
+                                    timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                                ]
+
+                            } catch (Exception e) {
+                                echo "❌ Impossible de lancer le job ${jobName} : ${e.message}"
                                 buildResults[service] = 'FAILURE'
                                 buildState.services[service] = [
                                     status: 'FAILURE',
@@ -258,6 +226,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Sauvegarde État') {
             steps {
