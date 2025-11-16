@@ -43,7 +43,7 @@ pipeline {
                             withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                                 dependencyCheck additionalArguments: '''
                                     -s .
-                                    -o dependency-check-report
+                                    -o ./dependency-check-report
                                     -f ALL
                                     --prettyPrint
                                     --nvdApiDelay=2000
