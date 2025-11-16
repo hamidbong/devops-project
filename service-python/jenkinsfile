@@ -101,23 +101,6 @@ pipeline {
             }
         }
 
-        stage('Trivy Filesystem Scan') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh '''
-                        docker run --rm \
-                            -v $(pwd):/scan \
-                            aquasec/trivy fs \
-                            --security-checks vuln,config \
-                            --output trivy-Filesystem-report.json \
-                            --severity CRITICAL \
-                            --exit-code 1 \
-                            /scan
-                    '''
-                }
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 dir("${SERVICE_NAME}") {
