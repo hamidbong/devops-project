@@ -191,7 +191,7 @@ pipeline {
                             
                             // Liste des noms de jobs possibles à essayer
                             def possibleJobNames = [
-                                service,
+                                "${service}",
                                 "${service}-pipeline", 
                                 "${service}-build",
                                 "${service}-ci",
