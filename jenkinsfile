@@ -207,8 +207,9 @@ pipeline {
                                     echo "🔍 Recherche du job : ${jobName}"
                                     def job = Jenkins.instance.getItemByFullName(jobName)
                                     
-                                    if (job != null) {
-                                        echo "✅ Job trouvé : ${jobName}"
+                                    // Vérification plus robuste du type de job
+                                    if (job != null && job instanceof hudson.model.Job) {
+                                        echo "✅ Job buildable trouvé : ${jobName}"
                                         jobFound = true
                                         
                                         def result = build(
@@ -228,17 +229,21 @@ pipeline {
                                             timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
                                         ]
                                         break // Sortir de la boucle si réussi
+                                    } else if (job != null) {
+                                        echo "⚠️ Item trouvé mais non buildable : ${jobName} (type: ${job?.class?.simpleName})"
+                                        continue // Essayer le nom suivant
+                                    } else {
+                                        echo "❌ Job non trouvé : ${jobName}"
                                     }
                                 } catch (Exception e) {
                                     lastError = e
-                                    echo "⚠️ Échec avec le job ${jobName} : ${e.message}"
+                                    echo "⚠️ Erreur avec le job ${jobName} : ${e.message}"
                                     // Continuer avec le nom suivant
                                 }
                             }
                             
                             if (!jobFound) {
                                 echo "❌ Aucun job valide trouvé pour ${service}. Noms essayés : ${possibleJobNames}"
-                                echo "📋 Dernière erreur : ${lastError?.message}"
                                 
                                 buildResults[service] = 'FAILURE'
                                 buildState.services[service] = [
