@@ -12,7 +12,7 @@ pipeline {
     }
 
     tools {
-        python 'Python3'
+        python 'Python3.12.3'
     }
 
 
