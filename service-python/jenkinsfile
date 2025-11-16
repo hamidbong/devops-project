@@ -8,8 +8,13 @@ pipeline {
         IMAGE_NAME  = "hamidbong/${SERVICE_NAME}"
         TRIVY_CACHE = 'trivy_cache'
         PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute path
-        PYTHON_VERSION = '3.10'
+        PYTHON_VERSION = '3.12.3'
     }
+
+    tools {
+        python 'Python3'
+    }
+
 
     stages {
 
@@ -22,20 +27,20 @@ pipeline {
         stage('Run Tests') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    // Assurez-vous que venv et les dépendances sont installées
                     sh '''
-                        python -m venv venv || true
+                        python3 -m venv venv
                         . venv/bin/activate
+                        pip install --upgrade pip
                         pip install -r requirements.txt
                         pip install pytest pytest-cov
-                        # Exécute les tests et génère le rapport de couverture JUnit et Coverage
+
                         pytest --cov=./ --cov-report=xml:coverage.xml --junitxml=test-results.xml -v
                     '''
                 }
-                // Archive les résultats pour consultation
                 archiveArtifacts artifacts: "${SERVICE_NAME}/test-results.xml,${SERVICE_NAME}/coverage.xml", allowEmptyArchive: true
             }
         }
+
 
         stage('OWASP Dependency-Check') {
             steps {
