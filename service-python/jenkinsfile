@@ -1,4 +1,4 @@
-def SERVICE_NAME = 'service-python'  // adapter au nom de ton serviceee
+def SERVICE_NAME = 'service-python'  // adapter au nom de ton servicee
 
 pipeline {
     agent any
