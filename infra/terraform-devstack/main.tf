@@ -70,6 +70,112 @@ resource "openstack_networking_secgroup_rule_v2" "icmp_rule" {
   security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "worker_kubelet" {
+  security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 10250
+  port_range_max    = 10250
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+# NodePort range
+resource "openstack_networking_secgroup_rule_v2" "nodeport_tcp" {
+  security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "nodeport_udp" {
+  security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
+  direction         = "ingress"
+  protocol          = "udp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+# Calico BGP
+resource "openstack_networking_secgroup_rule_v2" "calico_bgp_worker" {
+  security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 179
+  port_range_max    = 179
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+
+##############pour master k8
+
+resource "openstack_networking_secgroup_v2" "k8s_master_sg" {
+  name        = "k8s-master_security-group"
+  description = "Security group for Kubernetes master node"
+}
+
+# API Server
+resource "openstack_networking_secgroup_rule_v2" "master_api" {
+  security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 6443
+  port_range_max    = 6443
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+# etcd
+resource "openstack_networking_secgroup_rule_v2" "etcd" {
+  security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 2379
+  port_range_max    = 2380
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+# kubelet API
+resource "openstack_networking_secgroup_rule_v2" "kubelet_master" {
+  security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 10250
+  port_range_max    = 10250
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+# scheduler
+resource "openstack_networking_secgroup_rule_v2" "scheduler" {
+  security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 10259
+  port_range_max    = 10259
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+# controller-manager
+resource "openstack_networking_secgroup_rule_v2" "controller_manager" {
+  security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 10257
+  port_range_max    = 10257
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
+# Calico BGP
+resource "openstack_networking_secgroup_rule_v2" "calico_bgp_master" {
+  security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
+  direction         = "ingress"
+  protocol          = "tcp"
+  port_range_min    = 179
+  port_range_max    = 179
+  remote_ip_prefix  = "0.0.0.0/0"
+}
+
 ######################
 # Création de l'instance
 ######################
@@ -116,7 +222,8 @@ resource "openstack_compute_instance_v2" "k8s_master" {
   image_name      = "ubuntu-server24.04"  # Vérifie que cette image existe
   flavor_name     = "m1.small"         # Vérifie que ce flavor existe
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
-  security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
+  #security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
+  security_groups = [openstack_networking_secgroup_v2.k8s_master_sg.name]
 
   # CORRECTION : Réseau correct
   network {
