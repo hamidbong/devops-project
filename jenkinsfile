@@ -121,7 +121,8 @@ pipeline {
                                 // Vérifier si le job enfant existe
                                 def jobExists = false
                                 try {
-                                    def job = Jenkins.instance.getItemByFullName("${service}-pipeline")
+                                    //def job = Jenkins.instance.getItemByFullName("${service}-pipeline")
+                                    def job = Jenkins.instance.getItemByFullName("${service}")
                                     jobExists = (job != null)
                                 } catch (Exception e) {
                                     echo "⚠️ Impossible de vérifier l'existence du job ${service}-pipeline"
@@ -139,7 +140,7 @@ pipeline {
                                     ]
                                 } else {
                                     def result = build(
-                                        job: "${service}-pipeline",
+                                        job: "${service}",
                                         wait: true,
                                         propagate: false,
                                         parameters: []
