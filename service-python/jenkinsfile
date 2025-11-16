@@ -4,7 +4,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE   = 'sonarqube_devops_master_analyse'
+        AUTH_TOKEN_SONAR = credentials('SONAR_AUTH_TOKEN')
         IMAGE_NAME  = "hamidbong/${SERVICE_NAME}"
         TRIVY_CACHE = 'trivy_cache'
         PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute path
@@ -72,7 +72,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
+                withSonarQubeEnv('Sonarqube') {
                     script {
                         sh """
                             ${tool('SonarScanner')}/bin/sonar-scanner \

@@ -10,7 +10,7 @@ pipeline {
 
 
     environment {
-        SONARQUBE = 'sonarqube_devops_master_analyse' // Le nom défini dans Jenkins
+        AUTH_TOKEN_SONAR = credentials('SONAR_AUTH_TOKEN')
         IMAGE_NAME = "hamidbong/docker-quickstart"
 
         TRIVY_SERVER = "http://192.168.100.32:4954"
@@ -86,7 +86,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    withSonarQubeEnv("${SONARQUBE}") {
+                    withSonarQubeEnv('Sonarqube') {
                         script {
                             sh """
                                 ${tool('SonarScanner')}/bin/sonar-scanner \
