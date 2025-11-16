@@ -58,7 +58,7 @@ pipeline {
                                 -f ALL 
                                 --prettyPrint
                                 --noupdate''',
-                                odcInstallation: 'dependency-check-10.0.3'
+                                odcInstallation: 'dependency-check-12.1.9'
                         }
                     }
 
