@@ -11,11 +11,6 @@ pipeline {
         PYTHON_VERSION = '3.12.3'
     }
 
-    tools {
-        python3 'Python3.12.3'
-    }
-
-
     stages {
 
         stage('Checkout') {
