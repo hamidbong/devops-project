@@ -48,7 +48,7 @@ pipeline {
                                     --prettyPrint
                                     --nvdApiDelay=2000
                                     --nvdApiKey=${NVD_API_KEY}''',
-                                odcInstallation: 'dependency-check-10.0.3'
+                                odcInstallation: 'dependency-check-12.1.9'
                             }
                         } catch (Exception e) {
                             echo "Dependency-Check online scan failed, trying offline mode..."
