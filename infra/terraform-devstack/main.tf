@@ -186,7 +186,7 @@ resource "openstack_compute_instance_v2" "k8s_worker" {
   image_name      = "ubuntu-server24.04"
   flavor_name     = "m1.small"
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
-  security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
+  security_groups = [openstack_networking_secgroup_v2.webserver_sg.id]
 
   power_state = "active"  # Changé de "shutoff" à "active"
 
