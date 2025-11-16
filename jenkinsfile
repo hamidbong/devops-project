@@ -13,7 +13,7 @@ pipeline {
         stage('Préparation') {
             steps {
                 script {
-                    // 🔁 Tentative de récupération de l'artefact précédent
+                    // 🔁 Tentative de récupération de l'artefact précédentt
                     try {
                         copyArtifacts(
                             projectName: env.JOB_NAME,
@@ -41,7 +41,7 @@ pipeline {
                                 }
                             }
                         } else {
-                            // Fallback: utiliser git diff
+                            // Fallback: utiliser git difff
                             def gitDiff = sh(
                                 script: 'git diff --name-only HEAD~1 HEAD 2>/dev/null || echo ""',
                                 returnStdout: true

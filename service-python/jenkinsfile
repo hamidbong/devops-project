@@ -7,7 +7,7 @@ pipeline {
         AUTH_TOKEN_SONAR = credentials('SONAR_AUTH_TOKEN')
         IMAGE_NAME  = "hamidbong/${SERVICE_NAME}"
         TRIVY_CACHE = 'trivy_cache'
-        PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute path
+        PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute pathh
         PYTHON_VERSION = '3.12.3'
     }
 
