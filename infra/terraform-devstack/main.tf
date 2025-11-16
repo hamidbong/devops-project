@@ -220,7 +220,7 @@ resource "openstack_compute_instance_v2" "k8s_worker" {
 resource "openstack_compute_instance_v2" "k8s_master" {
   name            = "k8s-master"
   image_name      = "ubuntu-server24.04"  # Vérifie que cette image existe
-  flavor_name     = "m1.small"         # Vérifie que ce flavor existe
+  flavor_name     = "m1.devops"         # Vérifie que ce flavor existe
   key_pair        = openstack_compute_keypair_v2.ssh_key.name
   #security_groups = [openstack_networking_secgroup_v2.webserver_sg.name]
   security_groups = [openstack_networking_secgroup_v2.k8s_master_sg.name]
