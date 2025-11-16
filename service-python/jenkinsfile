@@ -101,6 +101,12 @@ pipeline {
             }
         }
 
+        stage('Check Docker Daemon') {
+            steps {
+                sh 'docker version'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 dir("${SERVICE_NAME}") {
