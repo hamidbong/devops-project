@@ -102,7 +102,7 @@ pipeline {
             }
         }
 
-        stage('Build Microservices') {
+        /*stage('Build Microservices') {
             steps {
                 script {
                     def servicesToBuild = env.AFFECTED_SERVICES.split(',').collect { it.trim() }.findAll { it }
@@ -160,6 +160,85 @@ pipeline {
 
                             } catch (Exception e) {
                                 echo "❌ Erreur lors du build de ${service} : ${e.message}"
+                                buildResults[service] = 'FAILURE'
+                                buildState.services[service] = [
+                                    status: 'FAILURE',
+                                    buildNumber: currentBuild.number,
+                                    buildUrl: currentBuild.absoluteUrl,
+                                    timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }*/
+
+        stage('Build Microservices') {
+            steps {
+                script {
+                    def servicesToBuild = env.AFFECTED_SERVICES.split(',').collect { it.trim() }.findAll { it }
+                    
+                    if (servicesToBuild.isEmpty()) {
+                        echo "ℹ️ Aucun service à builder"
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+
+                    servicesToBuild.each { service ->
+                        stage("Build ${service}") {
+                            echo "🚀 Déclenchement du job pour ${service}"
+                            
+                            // Liste des noms de jobs possibles à essayer
+                            def possibleJobNames = [
+                                service,
+                                "${service}-pipeline", 
+                                "${service}-build",
+                                "${service}-ci",
+                                "build-${service}"
+                            ]
+                            
+                            def jobFound = false
+                            def lastError = null
+                            
+                            for (jobName in possibleJobNames) {
+                                try {
+                                    echo "🔍 Recherche du job : ${jobName}"
+                                    def job = Jenkins.instance.getItemByFullName(jobName)
+                                    
+                                    if (job != null) {
+                                        echo "✅ Job trouvé : ${jobName}"
+                                        jobFound = true
+                                        
+                                        def result = build(
+                                            job: jobName,
+                                            wait: true,
+                                            propagate: false
+                                        )
+
+                                        def status = result.result.toString()
+                                        echo "🔎 Résultat ${service} : ${status}"
+
+                                        buildResults[service] = status
+                                        buildState.services[service] = [
+                                            status: status,
+                                            buildNumber: result.number,
+                                            buildUrl: result.absoluteUrl,
+                                            timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                                        ]
+                                        break // Sortir de la boucle si réussi
+                                    }
+                                } catch (Exception e) {
+                                    lastError = e
+                                    echo "⚠️ Échec avec le job ${jobName} : ${e.message}"
+                                    // Continuer avec le nom suivant
+                                }
+                            }
+                            
+                            if (!jobFound) {
+                                echo "❌ Aucun job valide trouvé pour ${service}. Noms essayés : ${possibleJobNames}"
+                                echo "📋 Dernière erreur : ${lastError?.message}"
+                                
                                 buildResults[service] = 'FAILURE'
                                 buildState.services[service] = [
                                     status: 'FAILURE',
