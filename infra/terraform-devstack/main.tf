@@ -73,6 +73,7 @@ resource "openstack_networking_secgroup_rule_v2" "icmp_rule" {
 resource "openstack_networking_secgroup_rule_v2" "worker_kubelet" {
   security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
@@ -83,6 +84,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_kubelet" {
 resource "openstack_networking_secgroup_rule_v2" "nodeport_tcp" {
   security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 30000
   port_range_max    = 32767
@@ -92,6 +94,7 @@ resource "openstack_networking_secgroup_rule_v2" "nodeport_tcp" {
 resource "openstack_networking_secgroup_rule_v2" "nodeport_udp" {
   security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "udp"
   port_range_min    = 30000
   port_range_max    = 32767
@@ -102,6 +105,7 @@ resource "openstack_networking_secgroup_rule_v2" "nodeport_udp" {
 resource "openstack_networking_secgroup_rule_v2" "calico_bgp_worker" {
   security_group_id = openstack_networking_secgroup_v2.webserver_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 179
   port_range_max    = 179
@@ -120,6 +124,7 @@ resource "openstack_networking_secgroup_v2" "k8s_master_sg" {
 resource "openstack_networking_secgroup_rule_v2" "master_api" {
   security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 6443
   port_range_max    = 6443
@@ -130,6 +135,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_api" {
 resource "openstack_networking_secgroup_rule_v2" "etcd" {
   security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 2379
   port_range_max    = 2380
@@ -140,6 +146,7 @@ resource "openstack_networking_secgroup_rule_v2" "etcd" {
 resource "openstack_networking_secgroup_rule_v2" "kubelet_master" {
   security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
@@ -150,6 +157,7 @@ resource "openstack_networking_secgroup_rule_v2" "kubelet_master" {
 resource "openstack_networking_secgroup_rule_v2" "scheduler" {
   security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10259
   port_range_max    = 10259
@@ -160,6 +168,7 @@ resource "openstack_networking_secgroup_rule_v2" "scheduler" {
 resource "openstack_networking_secgroup_rule_v2" "controller_manager" {
   security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10257
   port_range_max    = 10257
@@ -170,6 +179,7 @@ resource "openstack_networking_secgroup_rule_v2" "controller_manager" {
 resource "openstack_networking_secgroup_rule_v2" "calico_bgp_master" {
   security_group_id = openstack_networking_secgroup_v2.k8s_master_sg.id
   direction         = "ingress"
+  ethertype = "IPv4"
   protocol          = "tcp"
   port_range_min    = 179
   port_range_max    = 179
