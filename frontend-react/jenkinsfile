@@ -1,4 +1,4 @@
-def SERVICE_NAME = 'frontend-react'  // adapter à chaque fichierr
+def SERVICE_NAME = 'frontend-react'  // adapter à chaque fichier
 
 pipeline {
     agent any
