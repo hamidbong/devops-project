@@ -177,16 +177,18 @@ pipeline {
         }*/
         stage('Deploy to Kubernetes') {
             steps {
-                withKubeConfig([credentialsId: 'kubeconfig']) {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
                     sh """
-                        # Vérifier la connexion au cluster
+                        export KUBECONFIG=${KUBECONFIG}
                         kubectl cluster-info
                         
-                        # Déployer avec validation
-                        envsubst < k8s/${SERVICE_NAME}/deployment.yaml | kubectl apply -f -
+                        # Déploiement
+                        cat k8s/${SERVICE_NAME}/deployment.yaml | \
+                        sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
+                        
                         kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
                         
-                        # Vérifier le déploiement
+                        # Vérification
                         kubectl rollout status deployment/${SERVICE_NAME} --timeout=300s
                     """
                 }
