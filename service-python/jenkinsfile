@@ -164,7 +164,7 @@ pipeline {
             }
         }
 
-        /*stage('Deploy to Kubernetes') {
+        stage('Deploy to Kubernetes') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
                     sh """
@@ -174,8 +174,8 @@ pipeline {
                     """
                 }
             }
-        }*/
-        stage('Deploy to Kubernetes') {
+        }
+        /*stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
                     sh """
@@ -193,7 +193,7 @@ pipeline {
                     """
                 }
             }
-        }
+        }*/
 
         stage('Verify Deployment') {
             steps {
