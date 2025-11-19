@@ -182,10 +182,11 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
                     sh "kubectl rollout status deployment/deployment-${SERVICE_NAME} --timeout=300s"
-                    sh "kubectl wait --for=condition=ready pod -l app=${SERVICE_NAME} --timeout=300s"
+                    sh "kubectl wait --for=condition=ready pod -l app=deployment-${SERVICE_NAME} --timeout=300s"
                 }
             }
         }
+
 
         stage('Git Tag') {
             when {
