@@ -172,36 +172,16 @@ pipeline {
                         cat k8s/${SERVICE_NAME}/deployment.yaml | \
                         sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
                         kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
-                        kubectl rollout status deployment/${SERVICE_NAME} --timeout=300s
 
                     """
                 }
             }
         }
-        /*stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh """
-                        export KUBECONFIG=${KUBECONFIG}
-                        kubectl cluster-info
-                        
-                        # Déploiement
-                        cat k8s/${SERVICE_NAME}/deployment.yaml | \
-                        sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
-                        
-                        kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
-                        
-                        # Vérification
-                        kubectl rollout status deployment/${SERVICE_NAME} --timeout=300s
-                    """
-                }
-            }
-        }*/
-
+        
         stage('Verify Deployment') {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
-                    sh "kubectl rollout status deployment/${SERVICE_NAME}-deployment --timeout=300s"
+                    sh "kubectl rollout status deployment/deployment-${SERVICE_NAME} --timeout=300s"
                     sh "kubectl wait --for=condition=ready pod -l app=${SERVICE_NAME} --timeout=300s"
                 }
             }
