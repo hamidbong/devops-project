@@ -208,7 +208,7 @@ pipeline {
                         git tag \$VERSION_TAG
 
                         # Push sécurisé (HTTPS + token)
-                        git push https://\$GIT_USER:\$GIT_PASS@github.com/TON-REPO/TON-PROJET.git \$VERSION_TAG
+                        git push https://\$GIT_USER:\$GIT_PASS@github.com/hamidbong/devops-project.git \$VERSION_TAG
                     """
                 }
             }
