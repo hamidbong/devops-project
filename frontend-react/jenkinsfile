@@ -104,8 +104,8 @@ pipeline {
 
         stage("Quality Gates") {
             steps {
-                retry(4) {
-                    timeout(time: 2, unit: 'MINUTES') {
+                retry(5) {
+                    timeout(time: 1, unit: 'MINUTES') {
                         script {
                             def qg = waitForQualityGate()
                             if (qg.status != 'OK') {
@@ -123,26 +123,12 @@ pipeline {
             }
         }
 
-        /*stage('Build Docker Image') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    timeout(time: 15, unit: 'MINUTES') {
-                        script {
-                            dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
-                        }
-                    }
-                }
-            }
-        }*/
-
         stage('Build Docker Image') {
             steps {
                 dir("${SERVICE_NAME}") {
                     timeout(time: 15, unit: 'MINUTES') {
                         script {
-                            // Nettoyer le cache Docker avant de build
-                            sh 'docker system prune -f'
-                            dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "--no-cache .")
+                            dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                         }
                     }
                 }
