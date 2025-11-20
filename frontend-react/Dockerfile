@@ -17,14 +17,11 @@ FROM nginx:1.25
 # Supprimer la conf par défaut de NGINX
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copier notre conf personnalisée (que tu as écrite : nginx.conf)
+# Copier notre conf personnalisée
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copier les fichiers du build React vers NGINX
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Exposer le port 80
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
-
