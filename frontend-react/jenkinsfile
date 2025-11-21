@@ -9,7 +9,7 @@ pipeline {
 
     environment {
         AUTH_TOKEN_SONAR = credentials('SONAR_AUTH_TOKEN')
-        IMAGE_NAME    = "hamidbong/frontend-react"
+        IMAGE_NAME = "hamidbong/${SERVICE_NAME}"
     }
 
     stages {

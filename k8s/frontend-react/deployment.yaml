@@ -17,3 +17,5 @@ spec:
         image: hamidbong/frontend-react:{{BUILD_NUMBER}}
         ports:
         - containerPort: 80
+      imagePullSecrets:
+      - name: dockerhub-secret
