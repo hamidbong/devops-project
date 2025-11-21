@@ -82,12 +82,11 @@ pipeline {
                     script {
                         sh 'docker system prune -f'
                         dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "--no-cache .")
-                        }
                     }
                 }
             }
-        }
-        
+        }        
+
         /*stage('Setup Trivy Caches') {
             steps {
                 sh 'docker volume create --name trivy_cache || true'
