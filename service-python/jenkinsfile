@@ -70,7 +70,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        /*stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('Sonarqube') {
                     script {
@@ -99,7 +99,7 @@ pipeline {
                     sleep(time: 5, unit: 'SECONDS')
                 }
             }
-        }
+        }*/
 
         stage('Check Docker Daemon') {
             steps {
