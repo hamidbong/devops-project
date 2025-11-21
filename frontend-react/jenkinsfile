@@ -230,7 +230,7 @@ pipeline {
                         cat k8s/${SERVICE_NAME}/deployment.yaml | \
                         sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
                         kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
-                        # kubectl apply -f k8s/${SERVICE_NAME}/ingress.yaml
+                        kubectl apply -f k8s/${SERVICE_NAME}/ingress.yaml
                     """
                 }
             }
