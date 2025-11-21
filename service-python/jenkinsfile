@@ -19,6 +19,18 @@ pipeline {
             }
         }
 
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerHub-login',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+            }
+        }
+
         stage('Run Tests') {
             steps {
                 dir("${SERVICE_NAME}") {
