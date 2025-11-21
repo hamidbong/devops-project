@@ -154,7 +154,7 @@ pipeline {
             }
         }
 
-        stage('Setup Trivy Caches') {
+        /*stage('Setup Trivy Caches') {
             steps {
                 sh 'docker volume create --name trivy_cache || true'
                 sh 'docker volume create --name trivy_javadb_cache || true'
@@ -195,7 +195,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Push Docker Image') {
             steps {
