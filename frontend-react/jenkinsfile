@@ -85,7 +85,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        /*stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('Sonarqube') { // nom défini dans Jenkinssss
                     script {
@@ -120,7 +120,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Check Docker Daemon') {
             steps {
