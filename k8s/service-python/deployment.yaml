@@ -16,4 +16,4 @@ spec:
       - name: deployment-service-python
         image: hamidbong/service-python:{{BUILD_NUMBER}}
         ports:
-        - containerPort: 5000
+        - containerPort: 5003

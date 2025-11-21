@@ -7,4 +7,5 @@ spec:
     app: deployment-service-python
   ports:
     - port: 80
-      targetPort: 5000
+      targetPort: 5003
+  type: ClusterIP
