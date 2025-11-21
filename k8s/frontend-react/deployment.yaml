@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend-deployment
+  name: frontend-react-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: frontend-deployment
+      app: frontend-react-deployment
   template:
     metadata:
       labels:
-        app: frontend-deployment
+        app: frontend-react-deployment
     spec:
       containers:
       - name: frontend-container

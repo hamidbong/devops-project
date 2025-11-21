@@ -4,7 +4,7 @@ metadata:
   name: frontend-service
 spec:
   selector:
-    app: frontend-deployment
+    app: frontend-react-deployment
   ports:
   - port: 80
     targetPort: 80
