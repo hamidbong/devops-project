@@ -7,7 +7,7 @@ pipeline {
         AUTH_TOKEN_SONAR = credentials('SONAR_AUTH_TOKEN')
         IMAGE_NAME  = "hamidbong/${SERVICE_NAME}"
         TRIVY_CACHE = 'trivy_cache'
-        PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute path
+        PYTHONPATH  = "${WORKSPACE}/${SERVICE_NAME}"  // Full absolute pathh
         PYTHON_VERSION = '3.12.3'
     }
 
@@ -80,12 +80,12 @@ pipeline {
             steps {
                 dir("${SERVICE_NAME}") {
                     script {
-                        sh 'docker system prune -f'
-                        dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}", "--no-cache .")
+                        dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
                     }
                 }
             }
-        }        
+        }
+        
 
         /*stage('Setup Trivy Caches') {
             steps {
