@@ -7,32 +7,46 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Utiliser l'URI MongoDB depuis les variables d'environnement
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://mongodb-service:27017/service3_db")
 
-# retry simple loop to wait for mongodb in compose
+# Boucle de reconnexion avec gestion d'erreurs améliorée
 client = None
 for i in range(10):
     try:
-        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
-        client.server_info()
+        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        client.server_info()  # Test de connexion
+        print("✅ Connecté à MongoDB avec succès")
         break
     except Exception as e:
-        print("Waiting for MongoDB...", e)
-        time.sleep(1)
+        print(f"⏳ Tentative {i+1}/10 - En attente de MongoDB... Erreur: {e}")
+        time.sleep(2)
 
 if client is None:
+    print("❌ Échec de la connexion à MongoDB après plusieurs tentatives")
     raise SystemExit("Could not connect to MongoDB after retries")
 
-db = client.get_database()
-collection = db.get_collection("numbers")
+db = client.service3_db
+collection = db.numbers
 
 @app.route("/api/number", methods=["GET"])
 def get_number():
-    doc = collection.find_one()
-    if not doc:
-        doc = {"number": 3334}  # numéro spécifique du service 3 (clé "number")
-        collection.insert_one(doc)
-    return jsonify({"service": "Python", "number": int(doc["number"])})
+    try:
+        doc = collection.find_one()
+        if not doc:
+            doc = {"number": 3334}
+            collection.insert_one(doc)
+        return jsonify({"service": "Python", "number": int(doc["number"])})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    try:
+        client.server_info()
+        return jsonify({"status": "healthy", "database": "connected"})
+    except:
+        return jsonify({"status": "unhealthy", "database": "disconnected"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("FLASK_RUN_PORT", 5003))
