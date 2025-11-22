@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 
-const S1 = process.env.REACT_APP_SERVICE1_URL || "http://localhost:5001/api/number";
-const S2 = process.env.REACT_APP_SERVICE2_URL || "http://localhost:5002/api/number";
-const S3 = process.env.REACT_APP_SERVICE3_URL || "http://service-python-service:5003/api/number";
+const API = process.env.REACT_APP_API_BASE;
+
+const S1 = `${API}/node/api/number`;
+const S2 = `${API}/java/api/number`;
+const S3 = `${API}/python/api/number`;
 
 function App() {
   const [response, setResponse] = useState("");
