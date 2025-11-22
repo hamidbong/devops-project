@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const API = process.env.REACT_APP_API_BASE;
+const API = process.env.REACT_APP_API_BASE || "https://microservices.hamidbong.tech";
 
 const S1 = `${API}/node/api/number`;
 const S2 = `${API}/java/api/number`;
