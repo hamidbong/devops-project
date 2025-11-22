@@ -7,9 +7,10 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://127.0.0.1:27017/service3_db")
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://mongodb-service:27017/service3_db")
 
 # retry simple loop to wait for mongodb in compose
+client = None
 for i in range(10):
     try:
         client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
@@ -19,6 +20,9 @@ for i in range(10):
         print("Waiting for MongoDB...", e)
         time.sleep(1)
 
+if client is None:
+    raise SystemExit("Could not connect to MongoDB after retries")
+
 db = client.get_database()
 collection = db.get_collection("numbers")
 
@@ -26,7 +30,7 @@ collection = db.get_collection("numbers")
 def get_number():
     doc = collection.find_one()
     if not doc:
-        doc = {"value": 3334}  # numéro spécifique du service 3
+        doc = {"number": 3334}  # numéro spécifique du service 3 (clé "number")
         collection.insert_one(doc)
     return jsonify({"service": "Python", "number": int(doc["number"])})
 

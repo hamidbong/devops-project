@@ -247,25 +247,31 @@ pipeline {
 
         stage('Git Tag') {
             when {
-                branch 'main'  // on ne tag que sur la branche main
+                branch 'main'
             }
             steps {
-                script {
-                    def versionTag = "v${env.BUILD_NUMBER}"  // Exemple : v27
+                withCredentials([usernamePassword(credentialsId: 'github-login', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    sh """
+                        # Déshallow pour pouvoir taguer
+                        git fetch --unshallow || echo 'déjà complet'
 
-                    // Configure l'utilisateur Git si nécessaire (utile dans Jenkins agents)
-                    sh 'git config user.name "Jenkins CI"'
-                    sh 'git config user.email "jenkins@example.com"'
+                        # Config Git pour Jenkins
+                        git config user.name "Jenkins CI"
+                        git config user.email "brahbong@gmail.com"
 
-                    // Crée le tag et le pousse sur le repo distant
-                    sh "git tag ${versionTag}"
-                    sh "git push origin ${versionTag}"
+                        # Tag basé sur le numéro du build
+                        VERSION_TAG="v${BUILD_NUMBER}"
 
-                    echo "✅ Git tag ${versionTag} created and pushed."
+                        # Création du tag
+                        git tag \$VERSION_TAG
+
+                        # Push sécurisé (HTTPS + token)
+                        git push https://\$GIT_USER:\$GIT_PASS@github.com/hamidbong/devops-project.git \$VERSION_TAG
+                    """
                 }
             }
         }
-    }
+
 
     post {
         always {
