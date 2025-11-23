@@ -1,4 +1,5 @@
 mongo-secret.yaml
+mongo-express.yaml
 generated_key.pem
 # Dependencies
 node_modules/
