@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
-const API = process.env.REACT_APP_API_BASE || "https://microservices.hamidbong.tech";
+const API = process.env.REACT_APP_API_BASE || "http://microservices.hamidbong.tech";
 
 const S1 = `${API}/node/api/number`;
 const S2 = `${API}/java/api/number`;
-const S3 = `${API}/python/api/number`;
+const S3 = `${API}/api/number`;
 
 function App() {
   const [response, setResponse] = useState("");
