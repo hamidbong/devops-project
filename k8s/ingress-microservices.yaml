@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: microservices.hamidbong.tech
+    http:
+      paths:
+      - path: /python(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: service-python-service
+            port:
+              number: 5003
