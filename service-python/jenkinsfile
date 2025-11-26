@@ -142,6 +142,7 @@ pipeline {
                         cat k8s/${SERVICE_NAME}/deployment.yaml | \
                         sed "s/{{BUILD_NUMBER}}/${env.BUILD_ID}/g" | kubectl apply -f -
                         kubectl apply -f k8s/${SERVICE_NAME}/service.yaml
+                        kubectl apply -f k8s/ingress-microservices.yaml
 
                     """
                 }
@@ -169,7 +170,7 @@ pipeline {
 
                         # Config Git pour Jenkins
                         git config user.name "Jenkins CI"
-                        git config user.email "jenkins@example.com"
+                        git config user.email "brahbong@gmail.com"
 
                         # Tag basé sur le numéro du build
                         VERSION_TAG="v${BUILD_NUMBER}"
