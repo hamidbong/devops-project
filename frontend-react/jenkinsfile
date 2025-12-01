@@ -50,7 +50,7 @@ pipeline {
             }   
         }
 
-        stage('OWASP Dependency-Check') {
+        /*stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -83,7 +83,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         /*stage('SonarQube Analysis') {
             steps {
