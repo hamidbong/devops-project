@@ -87,7 +87,7 @@ const numberSchema = new mongoose.Schema({
 const NumberModel = mongoose.model("Number", numberSchema);
 
 // Health check endpoint
-app.get("/health", async (req, res) => {
+/*app.get("/health", async (req, res) => {
   const health = {
     service: "Node.js",
     status: "healthy",
@@ -123,7 +123,7 @@ app.get("/health", async (req, res) => {
   }
   
   res.json(health);
-});
+});*/
 
 app.get("/api/number", async (req, res) => {
   try {
@@ -165,7 +165,6 @@ app.get("/", (req, res) => {
     status: "running",
     endpoints: [
       { path: "/", method: "GET", description: "Service info" },
-      { path: "/health", method: "GET", description: "Health check" },
       { path: "/api/number", method: "GET", description: "Get service number" }
     ],
     database: {
