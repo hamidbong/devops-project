@@ -22,4 +22,4 @@ spec:
           valueFrom:
             secretKeyRef:
               name: mongo-credentials
-              key: mongo-uri
+              key: mongo-uri2
