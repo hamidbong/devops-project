@@ -4,9 +4,9 @@ metadata:
   name: node-service
 spec:
   selector:
-    app: node-deployment  # Doit matcher le label de ton Pod
+    app: deployment-service-node  # Doit matcher le label de ton Pod
   type: NodePort           # <- Ici tu changes ClusterIP en NodePort
   ports:
     - protocol: TCP
-      port: 80             # Port exposé à l'intérieur du cluster
-      targetPort: 3000     # Port accessible de l'extérieur sur chaque Node
+      port: 5001             # Port exposé à l'intérieur du cluster
+      targetPort: 5001     # Port accessible de l'extérieur sur chaque Node
