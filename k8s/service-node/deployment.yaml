@@ -19,4 +19,11 @@ spec:
           image: hamidbong/service-node:{{BUILD_NUMBER}}
           ports:
             - containerPort: 5001
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-credentials
+                  key: mongo-uri
+
 
