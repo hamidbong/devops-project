@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/service1_db";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://mongodb-service:27017/service3_db";
 
 const app = express();
 app.use(cors());
