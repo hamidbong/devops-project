@@ -15,15 +15,43 @@ spec:
         app: deployment-service-node
     spec:
       containers:
-        - name: login-container
+        - name: node-container
           image: hamidbong/service-node:{{BUILD_NUMBER}}
           ports:
             - containerPort: 5001
           env:
+            - name: PORT
+              value: "5001"
             - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
                   name: mongo-credentials
                   key: mongo-uri
-
+          # Ajouter des probes de santé
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"  
 
