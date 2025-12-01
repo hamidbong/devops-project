@@ -4,24 +4,27 @@ metadata:
   name: microservices-ingress
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
     - microservices.hamidbong.tech
     secretName: servicepython-cert
+
   rules:
   - host: microservices.hamidbong.tech
     http:
       paths:
-      - path: /python
+      - path: /python(/|$)(.*)
         pathType: Prefix
         backend:
           service:
             name: service-python-service
             port:
               number: 5003
-      - path: /node
+
+      - path: /node(/|$)(.*)
         pathType: Prefix
         backend:
           service:
