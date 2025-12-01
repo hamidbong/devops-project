@@ -4,7 +4,7 @@ const API = process.env.REACT_APP_API_BASE || "https://microservices.hamidbong.t
 
 const S1 = `${API}/node/api/number`;
 const S2 = `${API}/java/api/number`;
-const S3 = `${API}/api/number`;
+const S3 = `${API}/python/api/number`;
 
 function App() {
   const [response, setResponse] = useState("");

@@ -14,10 +14,17 @@ spec:
   - host: microservices.hamidbong.tech
     http:
       paths:
-      - path: /
+      - path: /python
         pathType: Prefix
         backend:
           service:
             name: service-python-service
             port:
               number: 5003
+      - path: /node
+        pathType: Prefix
+        backend:
+          service:
+            name: node-service
+            port:
+              number: 3000
