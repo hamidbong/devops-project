@@ -19,17 +19,4 @@ spec:
           image: hamidbong/service-node:{{BUILD_NUMBER}}
           ports:
             - containerPort: 5001
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 5001
-            initialDelaySeconds: 5
-            periodSeconds: 5
-
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 5001
-            initialDelaySeconds: 10
-            periodSeconds: 10
 
