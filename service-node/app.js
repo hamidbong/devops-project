@@ -11,8 +11,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+async function connectWithRetry() {
+  try {
+    await mongoose.connect(MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to MongoDB (Node service)");
+  } catch (err) {
+    console.error("MongoDB connection failed, retrying in 5s:", err.message);
+    setTimeout(connectWithRetry, 5000);
+  }
+}
 
-mongoose.connect(MONGO_URI, {
+connectWithRetry();
+
+
+/*mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {
@@ -20,7 +35,7 @@ mongoose.connect(MONGO_URI, {
 }).catch(err => {
   console.error("MongoDB connection error (Node):", err.message);
 });
-
+*/
 const numberSchema = new mongoose.Schema({ number: Number });
 const NumberModel = mongoose.model("Number", numberSchema);
 
