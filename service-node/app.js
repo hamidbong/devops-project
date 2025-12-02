@@ -5,7 +5,7 @@ const cors = require("cors");
 const PORT = process.env.PORT || 5001;
 
 // URI via Service Kubernetes (stable)
-const MONGO_URI = process.env.MONGO_URI || "mongodb://mongodb-service:27017/service2_db";
+const MONGO_URI = "mongodb://admin:password123@10.244.230.24:27017/service3_db?authSource=admin";
 
 // Petite bannière magique pour l'ambiance ✨
 console.log("🌌 Node.js – Service en éveil… préparation à la connexion MongoDB");
