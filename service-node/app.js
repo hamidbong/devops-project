@@ -3,47 +3,49 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const PORT = process.env.PORT || 5001;
-const MONGO_URI2 = process.env.MONGO_URI || "mongodb://mongodb-service:27017/service3_db";
-const MONGO_URI3 = "mongodb://admin:password123@10.244.230.24:27017/service3_db?authSource=admin";
 
-const MONGO_URI = "mongodb://admin:password123@mongodb-service.default.svc.cluster.local:27017/service3_db?authSource=admin";
+// URI via Service Kubernetes (stable)
+const MONGO_URI = process.env.MONGO_URI || "mongodb://admin:password123@mongodb-service.default.svc.cluster.local:27017/service3_db?authSource=admin";
+
+// Petite bannière magique pour l'ambiance ✨
+console.log("🌌 Node.js – Service en éveil… préparation à la connexion MongoDB");
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Connexion avec retry automatique
 async function connectWithRetry() {
+  console.log("🔎 Tentative de connexion à MongoDB…");
+
   try {
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,   // timeout connexion
+      connectTimeoutMS: 5000,           // timeout handshake
     });
-    console.log("Connected to MongoDB (Node service)");
+
+    console.log("✅ Connecté avec succès à MongoDB (Node service)");
   } catch (err) {
-    console.error("MongoDB connection failed, retrying in 5s:", err.message);
+    console.error(`⛔ Connexion MongoDB échouée : ${err.message}`);
+    console.log("⏳ Nouvelle tentative dans 5 secondes…");
     setTimeout(connectWithRetry, 5000);
   }
 }
 
 connectWithRetry();
 
-
-/*mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log("Connected to MongoDB (Node service)");
-}).catch(err => {
-  console.error("MongoDB connection error (Node):", err.message);
-});
-*/
+// --- Example model ---
 const numberSchema = new mongoose.Schema({ number: Number });
 const NumberModel = mongoose.model("Number", numberSchema);
 
+// --- Routes ---
 app.get("/api/number", async (req, res) => {
   try {
     let doc = await NumberModel.findOne();
     if (!doc) {
-      doc = new NumberModel({ number: 1114 }); // numéro spécifique du service 1
+      doc = new NumberModel({ number: 1114 });
       await doc.save();
     }
     res.json({ service: "Node.js", number: doc.number });
@@ -52,4 +54,7 @@ app.get("/api/number", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Service Node.js listening on ${PORT}`));
+// --- Start server ---
+app.listen(PORT, () =>
+  console.log(`🚀 Service Node.js opérationnel sur le port ${PORT}`)
+);
