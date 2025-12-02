@@ -34,7 +34,7 @@ def get_number():
     try:
         doc = collection.find_one()
         if not doc:
-            doc = {"number": 3334}
+            doc = {"number": 333444}
             collection.insert_one(doc)
         return jsonify({"service": "Python", "number": int(doc["number"])})
     except Exception as e:
