@@ -1,16 +1,15 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+import express, { json } from "express";
+import { connect, Schema, model } from "mongoose";
+import cors from "cors";
 
 const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://mongodb-service:27017/service3_db";
-
+const MONGO_URI1 = process.env.MONGO_URI || "mongodb://mongodb-service:27017/service3_db";
+const MONGO_URI = "mongodb://admin:password123@mongodb-service.default.svc.cluster.local:27017/service3_db?authSource=admin";
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
-
-mongoose.connect(MONGO_URI, {
+connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {
@@ -19,8 +18,8 @@ mongoose.connect(MONGO_URI, {
   console.error("MongoDB connection error (Node):", err.message);
 });
 
-const numberSchema = new mongoose.Schema({ number: Number });
-const NumberModel = mongoose.model("Number", numberSchema);
+const numberSchema = new Schema({ number: Number });
+const NumberModel = model("Number", numberSchema);
 
 app.get("/api/number", async (req, res) => {
   try {
