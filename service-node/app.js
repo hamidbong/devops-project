@@ -45,7 +45,7 @@ app.get("/api/number", async (req, res) => {
   try {
     let doc = await NumberModel.findOne();
     if (!doc) {
-      doc = new NumberModel({ number: 1114 });
+      doc = new NumberModel({ number: 111444 });
       await doc.save();
     }
     res.json({ service: "Node.js", number: doc.number });
