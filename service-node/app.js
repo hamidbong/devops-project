@@ -4,7 +4,9 @@ const cors = require("cors");
 
 const PORT = process.env.PORT || 5001;
 const MONGO_URI2 = process.env.MONGO_URI || "mongodb://mongodb-service:27017/service3_db";
-const MONGO_URI = "mongodb://admin:password123@10.244.230.24:27017/service3_db?authSource=admin";
+const MONGO_URI3 = "mongodb://admin:password123@10.244.230.24:27017/service3_db?authSource=admin";
+
+const MONGO_URI = "mongodb://admin:password123@mongodb-service.default.svc.cluster.local:27017/service3_db?authSource=admin";
 const app = express();
 app.use(cors());
 app.use(express.json());
