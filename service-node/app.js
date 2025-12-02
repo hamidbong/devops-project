@@ -22,15 +22,15 @@ async function connectWithRetry() {
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,   // timeout connexion
-      connectTimeoutMS: 5000,           // timeout handshake
+      serverSelectionTimeoutMS: 10000,   // timeout connexion
+      connectTimeoutMS: 10000,           // timeout handshake
     });
 
     console.log("✅ Connecté avec succès à MongoDB (Node service)");
   } catch (err) {
     console.error(`⛔ Connexion MongoDB échouée : ${err.message}`);
-    console.log("⏳ Nouvelle tentative dans 5 secondes…");
-    setTimeout(connectWithRetry, 5000);
+    console.log("⏳ Nouvelle tentative dans 10 secondes…");
+    setTimeout(connectWithRetry, 10000);
   }
 }
 
