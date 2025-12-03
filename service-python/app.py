@@ -7,8 +7,12 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-# Utiliser l'URI MongoDB depuis les variables d'environnement
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://mongodb-serviceeee:27017/service3_db")
+user = os.getenv("MONGODB_ADMINUSERNAME")
+password = os.getenv("MONGODB_ADMINPASSWORD")
+host = os.getenv("URI_MONGODB_SERVER")      # ex: mongodb-service
+port = os.getenv("MONGODB_PORT", "27017")
+
+MONGO_URI = f"mongodb://{user}:{password}@{host}:{port}/service3_db?authSource=admin"
 
 # Boucle de reconnexion avec gestion d'erreurs améliorée
 client = None

@@ -18,8 +18,20 @@ spec:
         ports:
         - containerPort: 5003
         env:
-        - name: MONGO_URI
+        - name: MONGODB_ADMINUSERNAME
           valueFrom:
             secretKeyRef:
-              name: mongo-credentials
-              key: mongo-uri2
+              name: mongodb-secret
+              key: mongo-root-username
+        - name: MONGODB_ADMINPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongo-root-password
+        - name: URI_MONGODB_SERVER
+          valueFrom:
+            configMapKeyRef:
+              name: mongodb-configmap
+              key: database_url
+        - name: MONGODB_PORT
+          value: "27017"
