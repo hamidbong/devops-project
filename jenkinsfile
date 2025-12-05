@@ -210,7 +210,7 @@ pipeline {
         always {
             script {
                 def buildSummary = "📊 *Résumé du Pipeline Orchestrateur - Build #${env.BUILD_NUMBER}*\n"
-                buildSummary += "*Statut global :* ${currentBuild.result ?: 'INCONNU'}\n"
+                buildSummary += "*Statut global du pipeline orchestrateur :* ${currentBuild.result ?: 'INCONNU'}\n"
                 buildSummary += "*Branche :* ${env.BRANCH_NAME ?: 'main'}\n"
                 buildSummary += "*URL du build :* ${env.BUILD_URL}\n\n"
                 
