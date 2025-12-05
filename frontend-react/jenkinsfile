@@ -50,7 +50,7 @@ pipeline {
             }   
         }
 
-        /*stage('OWASP Dependency-Check') {
+        stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -83,9 +83,9 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
 
-        /*stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('Sonarqube') { // nom défini dans Jenkinssss
                     script {
@@ -120,25 +120,13 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
 
         stage('Check Docker Daemon') {
             steps {
                 sh 'docker version'
             }
         }
-
-        /*stage('Build Docker Image') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    timeout(time: 15, unit: 'MINUTES') {
-                        script {
-                            dockerImage = docker.build("${IMAGE_NAME}:${env.BUILD_ID}")
-                        }
-                    }
-                }
-            }
-        }*/
 
         stage('Build Docker Image') {
             steps {
@@ -154,7 +142,7 @@ pipeline {
             }
         }
 
-        /*stage('Setup Trivy Caches') {
+        stage('Setup Trivy Caches') {
             steps {
                 sh 'docker volume create --name trivy_cache || true'
                 sh 'docker volume create --name trivy_javadb_cache || true'
@@ -195,7 +183,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
 
         stage('Push Docker Image') {
             steps {
