@@ -262,15 +262,24 @@ pipeline {
     }
 
     post {
-        always {
-            echo "🧾 Pipeline completed on build #${env.BUILD_NUMBER}"
-            // Archive artifacts are now done within their respective stages
-        }
         success {
-            echo '✅ Build succeeded!'
+            slackSend (
+                channel: "${env.SLACK_CHANNEL}",
+                message: "✅ *${env.JOB_NAME}* #${env.BUILD_NUMBER} a réussi : ${env.BUILD_URL}",
+                color: 'good'
+            )
         }
+
         failure {
-            echo '❌ Build failed!'
+            slackSend (
+                channel: "${env.SLACK_CHANNEL}",
+                message: "❌ *${env.JOB_NAME}* #${env.BUILD_NUMBER} a échoué : ${env.BUILD_URL}",
+                color: 'danger'
+            )
+        }
+
+        always {
+            echo 'Pipeline terminé.'
         }
     }
 }

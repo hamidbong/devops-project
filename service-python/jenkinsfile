@@ -188,15 +188,24 @@ pipeline {
     }
 
     post {
-        always {
-            archiveArtifacts artifacts: '**/coverage.xml,**/test-results.xml', allowEmptyArchive: true
-            echo "📦 Build #${env.BUILD_NUMBER} completed"
-        }
         success {
-            echo '✅ Pipeline completed successfully'
+            slackSend (
+                channel: "${env.SLACK_CHANNEL}",
+                message: "✅ *${env.JOB_NAME}* #${env.BUILD_NUMBER} a réussi : ${env.BUILD_URL}",
+                color: 'good'
+            )
         }
+
         failure {
-            echo '❌ Pipeline failed'
+            slackSend (
+                channel: "${env.SLACK_CHANNEL}",
+                message: "❌ *${env.JOB_NAME}* #${env.BUILD_NUMBER} a échoué : ${env.BUILD_URL}",
+                color: 'danger'
+            )
+        }
+
+        always {
+            echo 'Pipeline terminé.'
         }
     }
 }
