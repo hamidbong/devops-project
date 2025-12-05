@@ -7,6 +7,7 @@ pipeline {
     environment {
         SERVICES = 'service-node,service-python,frontend-react,gestion-prod-service'
         BUILD_STATE_FILE = '.build-state.txt'
+        SLACK_CHANNEL = '#jenkins_devops_alert'
     }
 
     stages {
@@ -175,7 +176,7 @@ pipeline {
         }
     }
 
-    post {
+    /*post {
         always {
             echo "📊 Résumé final des builds :"
             script {
@@ -210,5 +211,66 @@ pipeline {
             // Nettoyage optionnel
             echo "🧹 Nettoyage de l'espace de travail"
         }
+    }*/
+
+    post {
+        always {
+            echo "📊 Résumé final des builds :"
+            script {
+                if (buildResults) {
+                    buildResults.each { service, result ->
+                        def emoji = result == 'SUCCESS' ? '✅' : '❌'
+                        echo "${emoji} ${service} : ${result}"
+                    }
+
+                    def successCount = buildResults.count { k, v -> v == 'SUCCESS' }
+                    def failureCount = buildResults.count { k, v -> v == 'FAILURE' }
+                    def unstableCount = buildResults.count { k, v -> v == 'UNSTABLE' }
+                    def abortedCount = buildResults.count { k, v -> v == 'ABORTED' }
+
+                    echo "📊 TOTAL: ${buildResults.size()}, SUCCÈS: ${successCount}, ÉCHECS: ${failureCount}, INSTABLES: ${unstableCount}, ABANDONNÉS: ${abortedCount}"
+
+                    // Résultat global
+                    if (failureCount > 0) {
+                        currentBuild.result = 'FAILURE'
+                    } else if (unstableCount > 0) {
+                        currentBuild.result = 'UNSTABLE'
+                    } else if (successCount > 0) {
+                        currentBuild.result = 'SUCCESS'
+                    }
+
+                    // 🔥🔥🔥 Envoi Alert Slack 🔥🔥🔥
+                    def summaryMessage = "*🔔 Résultat pipeline Orchestrateur — Build #${env.BUILD_NUMBER}*\n"
+                    summaryMessage += "> 📅 *Date:* ${new Date().format("yyyy-MM-dd HH:mm")}\n"
+                    summaryMessage += "> 👤 *Déclenché par:* ${currentBuild.rawBuild.getCauses()[0].shortDescription}\n\n"
+
+                    buildResults.each { service, result ->
+                        def emoji = result == 'SUCCESS' ? '🟢' : '🔴'
+                        summaryMessage += "${emoji} *${service}* → *${result}*\n"
+                    }
+
+                    summaryMessage += "\n*📦 Résultat global:* `${currentBuild.result}`"
+
+                    slackSend(
+                        channel: "${env.SLACK_CHANNEL}",
+                        message: summaryMessage
+                    )
+                }
+            }
+        }
+
+        failure {
+            slackSend(
+                channel: "${env.SLACK_CHANNEL}",
+                message: "❌ *Pipeline Orchestrateur* a échoué dans le build #${env.BUILD_NUMBER}"
+            )
+        }
+
+        success {
+            slackSend(
+                channel: "${env.SLACK_CHANNEL}",
+                message: "🎉 *Pipeline Orchestrateur* réussi pour le build #${env.BUILD_NUMBER}"
+            )
+        }
     }
-}
+ }
