@@ -176,8 +176,8 @@ pipeline {
         }
     }
 
-    /*post {
-        always {
+    post {
+        /*always {
             echo "📊 Résumé final des builds :"
             script {
                 if (buildResults) {
@@ -205,57 +205,78 @@ pipeline {
                     echo "ℹ️ Aucun résultat de build à afficher."
                 }
             }
-        }
+        }*/
 
-        cleanup {
-            // Nettoyage optionnel
-            echo "🧹 Nettoyage de l'espace de travail"
-        }
-    }*/
-
-    post {
         always {
-            echo "📊 Résumé final des builds :"
             script {
-                if (buildResults) {
+                def buildSummary = "📊 *Résumé du Pipeline Orchestrateur - Build #${env.BUILD_NUMBER}*\n"
+                buildSummary += "*Statut global :* ${currentBuild.result ?: 'INCONNU'}\n"
+                buildSummary += "*Branche :* ${env.BRANCH_NAME ?: 'main'}\n"
+                buildSummary += "*URL du build :* ${env.BUILD_URL}\n\n"
+                
+                if (buildResults && !buildResults.isEmpty()) {
+                    buildSummary += "*Détail par service :*\n"
+                    
                     buildResults.each { service, result ->
-                        def emoji = result == 'SUCCESS' ? '✅' : '❌'
-                        echo "${emoji} ${service} : ${result}"
+                        def emoji = result == 'SUCCESS' ? '✅' : (result == 'UNSTABLE' ? '⚠️' : '❌')
+                        def serviceInfo = buildState.services[service]
+                        if (serviceInfo) {
+                            buildSummary += "${emoji} *${service}* : ${result} (<${serviceInfo.buildUrl}|#${serviceInfo.buildNumber}>)\n"
+                        } else {
+                            buildSummary += "${emoji} *${service}* : ${result}\n"
+                        }
                     }
-
+                    
                     def successCount = buildResults.count { k, v -> v == 'SUCCESS' }
                     def failureCount = buildResults.count { k, v -> v == 'FAILURE' }
                     def unstableCount = buildResults.count { k, v -> v == 'UNSTABLE' }
                     def abortedCount = buildResults.count { k, v -> v == 'ABORTED' }
-
-                    echo "📊 TOTAL: ${buildResults.size()}, SUCCÈS: ${successCount}, ÉCHECS: ${failureCount}, INSTABLES: ${unstableCount}, ABANDONNÉS: ${abortedCount}"
-
-                    // Résultat global
-                    if (failureCount > 0) {
-                        currentBuild.result = 'FAILURE'
-                    } else if (unstableCount > 0) {
-                        currentBuild.result = 'UNSTABLE'
-                    } else if (successCount > 0) {
-                        currentBuild.result = 'SUCCESS'
+                    def totalCount = buildResults.size()
+                    
+                    buildSummary += "\n*📊 Statistiques :*\n"
+                    buildSummary += "• Total services : ${totalCount}\n"
+                    buildSummary += "• ✅ Succès : ${successCount}\n"
+                    buildSummary += "• ❌ Échecs : ${failureCount}\n"
+                    buildSummary += "• ⚠️ Instables : ${unstableCount}\n"
+                    buildSummary += "• ⏹️ Abandonnés : ${abortedCount}\n"
+                    
+                    // Ajouter les services affectés
+                    if (env.AFFECTED_SERVICES) {
+                        buildSummary += "\n*🔍 Services affectés :* ${env.AFFECTED_SERVICES}\n"
                     }
-
-                    // 🔥🔥🔥 Envoi Alert Slack 🔥🔥🔥
-                    def summaryMessage = "*🔔 Résultat pipeline Orchestrateur — Build #${env.BUILD_NUMBER}*\n"
-                    summaryMessage += "> 📅 *Date:* ${new Date().format("yyyy-MM-dd HH:mm")}\n"
-                    summaryMessage += "> 👤 *Déclenché par:* ${currentBuild.rawBuild.getCauses()[0].shortDescription}\n\n"
-
-                    buildResults.each { service, result ->
-                        def emoji = result == 'SUCCESS' ? '🟢' : '🔴'
-                        summaryMessage += "${emoji} *${service}* → *${result}*\n"
-                    }
-
-                    summaryMessage += "\n*📦 Résultat global:* `${currentBuild.result}`"
-
-                    slackSend(
-                        channel: "${env.SLACK_CHANNEL}",
-                        message: summaryMessage
-                    )
+                } else {
+                    buildSummary += "*ℹ️ Aucun service n'a été construit.*\n"
                 }
+                
+                // Ajouter la durée du build
+                def duration = currentBuild.durationString ?: "N/A"
+                buildSummary += "\n*⏱️ Durée :* ${duration}"
+                
+                // Déterminer la couleur et l'emoji pour le message Slack
+                def color = "good"  // vert par défaut
+                def statusEmoji = "✅"
+                
+                if (currentBuild.result == 'FAILURE') {
+                    color = "danger"
+                    statusEmoji = "❌"
+                } else if (currentBuild.result == 'UNSTABLE') {
+                    color = "warning"
+                    statusEmoji = "⚠️"
+                } else if (currentBuild.result == 'ABORTED') {
+                    color = "#808080"
+                    statusEmoji = "⏹️"
+                }
+                
+                // Envoyer la notification Slack
+                slackSend(
+                    channel: "${env.SLACK_CHANNEL}",
+                    color: color,
+                    message: "${statusEmoji} *Pipeline Orchestrateur - Build #${env.BUILD_NUMBER} - ${currentBuild.result ?: 'INCONNU'}*\n${buildSummary}",
+                    footer: "Jenkins CI/CD",
+                    mrkdwn: true
+                )
+                
+                echo "📤 Notification Slack envoyée avec le statut : ${currentBuild.result}"
             }
         }
 
