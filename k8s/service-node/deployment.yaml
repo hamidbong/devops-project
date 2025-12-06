@@ -39,7 +39,7 @@ spec:
             valueFrom:
               configMapKeyRef:
                 name: mongodb-configmap
-                key: database_name
+                key: database_name2
           - name: MONGODB_REPLICA_SET
             valueFrom:
               configMapKeyRef:
