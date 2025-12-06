@@ -15,7 +15,7 @@ database_name = os.getenv("MONGODB_DATABASE", "service3_db")
 replica_set = os.getenv("MONGODB_REPLICA_SET", "rs0")
 auth_source = "admin"
 
-mongo_uri = f"mongodb://{user}:{password}@{host}/{database_name}?replicaSet={replica_set}&authSource={auth_source}&retryWrites=true&w=majority"
+MONGO_URI = f"mongodb://{user}:{password}@{host}/{database_name}?replicaSet={replica_set}&authSource={auth_source}&retryWrites=true&w=majority"
 #MONGO_URI = f"mongodb://{user}:{password}@{host}:{port}/service3_db?authSource=admin"
 
 # Boucle de reconnexion avec gestion d'erreurs améliorée
