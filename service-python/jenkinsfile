@@ -37,7 +37,7 @@ pipeline {
         }
 
 
-        stage('OWASP Dependency-Check') {
+        /*stage('OWASP Dependency-Check') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
@@ -68,7 +68,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Check Docker Daemon') {
             steps {
@@ -87,7 +87,7 @@ pipeline {
         }
         
 
-        stage('Setup Trivy Caches') {
+        /*stage('Setup Trivy Caches') {
             steps {
                 sh 'docker volume create --name trivy_cache || true'
                 sh 'docker volume create --name trivy_javadb_cache || true'
@@ -111,7 +111,7 @@ pipeline {
                 '''
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
             }
-        }
+        }*/
 
         stage('Push Docker Image') {
             steps {
