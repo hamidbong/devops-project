@@ -35,5 +35,15 @@ spec:
               configMapKeyRef:
                 name: mongodb-configmap
                 key: database_url
+          - name: MONGODB_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-configmap
+                key: database_name
+          - name: MONGODB_REPLICA_SET
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-configmap
+                key: replica_set
           - name: MONGODB_PORT
             value: "27017"

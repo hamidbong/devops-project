@@ -2,18 +2,34 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
+
+
 const PORT = process.env.PORT || 5001;
 
+// Récupération des variables d'environnement
 const user = process.env.MONGODB_ADMINUSERNAME;
 const pass = process.env.MONGODB_ADMINPASSWORD;
-const host = process.env.URI_MONGODB_SERVER;   // ex: mongodb-service
-const port = process.env.MONGODB_PORT;
+const hosts = process.env.URI_MONGODB_SERVER || "mongodb-0.mongodb-headless.default.svc.cluster.local:27017,mongodb-1.mongodb-headless.default.svc.cluster.local:27017,mongodb-2.mongodb-headless.default.svc.cluster.local:27017";
+const databaseName = process.env.MONGODB_DATABASE || "service1_db";
+const replicaSet = process.env.MONGODB_REPLICA_SET || "rs0";
+const authSource = "admin";
 
-// URI via Service Kubernetes (stable)
-const MONGO_URI = `mongodb://${user}:${pass}@${host}:${port}/service1_db?authSource=admin` || "mongodb://mongodb-service:27017/service2_db?authSource=admin";
+// Nettoyage de la variable hosts
+let cleanedHosts = hosts;
+if (cleanedHosts.startsWith("mongodb://")) {
+    cleanedHosts = cleanedHosts.replace("mongodb://", "");
+}
 
-// Petite bannière magique pour l'ambiance ✨
-console.log("🌌 Node.js – Service en éveil… préparation à la connexion MongoDB");
+// Construction de l'URI MongoDB avec replica set
+const MONGO_URI = `mongodb://${user}:${pass}@${cleanedHosts}/${databaseName}?replicaSet=${replicaSet}&authSource=${authSource}&retryWrites=true&w=majority`;
+
+// URI masquée pour les logs (sécurité)
+const MONGO_URI_MASKED = MONGO_URI.replace(pass, "*****");
+console.log("🌌 Node.js – Service en éveil…");
+console.log(`🔧 Tentative de connexion à MongoDB...`);
+console.log(`🔧 URI: ${MONGO_URI_MASKED}`);
+console.log(`🔧 Base de données: ${databaseName}`);
+console.log(`🔧 Replica Set: ${replicaSet}`);
 
 const app = express();
 app.use(cors());
