@@ -6,15 +6,18 @@ import time
 
 app = Flask(__name__)
 CORS(app)
+
 user = os.getenv("MONGODB_ADMINUSERNAME")
 password = os.getenv("MONGODB_ADMINPASSWORD")
 hosts = os.getenv("URI_MONGODB_SERVER")  # Contient déjà tous les hôtes
 database_name = os.getenv("MONGODB_DATABASE", "service3_db")
 replica_set = os.getenv("MONGODB_REPLICA_SET", "rs0")
 auth_source = "admin"
-port = os.getenv("MONGODB_PORT", "27017")
-# Solution 1: Construction correcte avec tous les hôtes
+
+host_list = hosts.split(",")  # Si c'est une liste séparée par des virgules
 MONGO_URI = f"mongodb://{user}:{password}@{hosts}/{database_name}?replicaSet={replica_set}&authSource={auth_source}&retryWrites=true&w=majority"
+
+print(f"MONGO_URI: {MONGO_URI}")
 
 
 # Boucle de reconnexion avec gestion d'erreurs améliorée
