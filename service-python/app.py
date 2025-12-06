@@ -34,12 +34,14 @@ for i in range(10):
     try:
         client = MongoClient(
             MONGO_URI,
-            serverSelectionTimeoutMS=5000,
+            serverSelectionTimeoutMS=10000,  # 10 secondes au lieu de 5
             socketTimeoutMS=30000,
-            connectTimeoutMS=10000,
+            connectTimeoutMS=15000,
             retryWrites=True,
-            w="majority"
+            w="majority",
+            readPreference='primaryPreferred'  # Préfère lire depuis le PRIMARY
         )
+                
         # Test de connexion plus robuste
         client.admin.command('ping')
         print(f"✅ Tentative {i+1}/10 - Connecté à MongoDB avec succès")
