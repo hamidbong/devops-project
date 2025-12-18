@@ -68,7 +68,49 @@ pipeline {
                     }
                 }
             }
+        }
+
+        stage('SonarQube Analysis') {
+            environment { 
+                SONAR_SCANNER_OPTS = "-Xmx2G"
+            }
+
+            steps {
+                withSonarQubeEnv('Sonarqube') { // nom défini dans Jenkins
+                    script {
+                        def scannerHome = tool('SonarScanner')
+
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=${SERVICE_NAME} \
+                            -Dsonar.projectName=${SERVICE_NAME} \
+                            -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                            -Dsonar.sources=${SERVICE_NAME} \
+                            -Dsonar.language=py \
+                            -Dsonar.python.version=3 \
+                            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,.venv/**,build/**,dist/**,coverage/**,tests/** \
+                            -Dsonar.python.coverage.reportPaths=${SERVICE_NAME}/coverage.xml
+                        """
+                    }
+                }
+            }
+        }
+
+        stage("Quality Gates") {
+            steps {
+                retry(4) {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        script {
+                            def qg = waitForQualityGate()
+                            if (qg.status != 'OK') {
+                                error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                            }
+                        }
+                    }
+                }
+            }
         }*/
+
 
         stage('Check Docker Daemon') {
             steps {
@@ -87,7 +129,7 @@ pipeline {
         }
         
 
-        /*stage('Setup Trivy Caches') {
+        stage('Setup Trivy Caches') {
             steps {
                 sh 'docker volume create --name trivy_cache || true'
                 sh 'docker volume create --name trivy_javadb_cache || true'
@@ -111,7 +153,7 @@ pipeline {
                 '''
                 archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
             }
-        }*/
+        }
 
         stage('Push Docker Image') {
             steps {
