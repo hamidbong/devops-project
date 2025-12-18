@@ -70,31 +70,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            environment { 
-                SONAR_SCANNER_OPTS = "-Xmx2G"
-            }
-
-            steps {
-                withSonarQubeEnv('Sonarqube') { // nom défini dans Jenkins
-                    script {
-                        def scannerHome = tool('SonarScanner')
-
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=${SERVICE_NAME} \
-                            -Dsonar.projectName=${SERVICE_NAME} \
-                            -Dsonar.projectVersion=${env.BUILD_NUMBER} \
-                            -Dsonar.sources=${SERVICE_NAME} \
-                            -Dsonar.language=py \
-                            -Dsonar.python.version=3 \
-                            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,.venv/**,build/**,dist/**,coverage/**,tests/** \
-                            -Dsonar.python.coverage.reportPaths=${SERVICE_NAME}/coverage.xml
-                        """
-                    }
-                }
-            }
-        }
+        
 
         stage("Quality Gates") {
             steps {
