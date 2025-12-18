@@ -70,7 +70,7 @@ pipeline {
             }
         }
 
-        
+       
 
         stage("Quality Gates") {
             steps {
@@ -121,7 +121,7 @@ pipeline {
                         -v $(pwd):/project \
                         aquasec/trivy:latest \
                         image ${IMAGE_NAME}:${BUILD_ID} \
-                        --exit-code 0 \
+                        --exit-code 1 \
                         --severity CRITICAL,HIGH \
                         --ignore-unfixed \
                         --format json \
