@@ -71,6 +71,7 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 - HashiCorp Vault (secrets)
 - RBAC Kubernetes
 - TLS / HTTPS
+![Pipeline CI/CD Sécurisé](docs/diagrams/cicd-pipeline.png)
 
 ### 📊 Observabilité
 - Prometheus
