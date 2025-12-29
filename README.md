@@ -73,9 +73,6 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 - RBAC Kubernetes
 - TLS / HTTPS
 
-### 🔄 Schéma du Pipeline CI/CD Sécurisé
-![Pipeline CI/CD Sécurisé](docs/diagrams/cicd-pipeline.png)
-
 ### 📊 Observabilité
 - Prometheus
 - Grafana
@@ -93,6 +90,9 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 6. **Déploiement Kubernetes via Helm**
 7. **Tests DAST (OWASP ZAP)**
 8. **Monitoring & Alerting**
+
+### 🔄 Schéma du Pipeline CI/CD Sécurisé
+![Pipeline CI/CD Sécurisé](docs/diagrams/cicd-pipeline.png)
 
 🔐 Toute vulnérabilité critique bloque automatiquement le pipeline.
 
