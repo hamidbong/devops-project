@@ -43,7 +43,8 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 
 ## 🧩 Architecture Globale
 
-
+### 🌐 Schéma Réseau de l’Infrastructure OpenStack
+![Schéma Réseau OpenStack](docs/diagrams/openstack-network.png)
 
 ---
 
