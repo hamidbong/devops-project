@@ -30,5 +30,5 @@ Thumbs.db
 # Kubernetes secrets (prevent committing raw secret manifests)
 **/*secret*.yaml
 **/*Secret*.yaml
-**/*secret.yaml
+**/**/mongo-secret.yaml
 
