@@ -72,6 +72,7 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 - RBAC Kubernetes
 - TLS / HTTPS
 
+### 🔄 Schéma du Pipeline CI/CD Sécurisé
 ![Pipeline CI/CD Sécurisé](docs/diagrams/cicd-pipeline.png)
 
 ### 📊 Observabilité
