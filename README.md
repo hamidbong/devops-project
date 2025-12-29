@@ -103,25 +103,30 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 ```bash
 devops-project/
 │
-├── openstack/
-│   ├── devstack/
-│   ├── terraform/
-│   └── ansible/
+├── infra/
+│   ├── ansible/
+│   ├── kubernetes/
+│   └── sonarqube/
+│   └── terraform-devstack/
 │
-├── app/
-│   ├── frontend/
-│   ├── auth-service/
-│   ├── product-service/
-│   └── dashboard-service/
+├── frontend-react/
+│   ├── src/
+│   ├── jenkinsfile
+│   ├── Dockerfile
 │
-├── ci-cd/
-│   ├── Jenkinsfile
-│   └── gitlab-ci.yml
+├── gestion-prod-service
+│   ├── src/
+│   ├── jenkinsfile
+│   ├── Dockerfile
 │
-├── k8s/
+├── service-node/
+│   ├── src/
+│   ├── jenkinsfile
+│   ├── Dockerfile
+│
+├── k8s/ (for the mansifests file)
 │   ├── manifests/
 │   └── helm-charts/
 │
-├── security/
 ├── monitoring/
 └── README.md
