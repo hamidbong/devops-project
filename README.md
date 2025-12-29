@@ -69,14 +69,12 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 - Trivy (scan images Docker)
 - SonarQube (SAST)
 - OWASP ZAP (DAST)
-- HashiCorp Vault (secrets)
 - RBAC Kubernetes
 - TLS / HTTPS
 
 ### 📊 Observabilité
 - Prometheus
 - Grafana
-- ELK Stack
 
 ---
 
@@ -87,7 +85,7 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 3. **Build des images Docker**
 4. **Scan des vulnérabilités (Trivy)**
 5. **Tests automatisés**
-6. **Déploiement Kubernetes via Helm**
+6. **Déploiement Kubernetes via kubectl**
 7. **Tests DAST (OWASP ZAP)**
 8. **Monitoring & Alerting**
 
