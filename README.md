@@ -62,7 +62,7 @@ L’infrastructure cloud sert de **socle IaaS**, sur lequel sont déployés les 
 - NGINX Ingress Controller
 
 ### 🔁 CI/CD
-- Jenkins ou GitLab CI/CD
+- Jenkins CI/CD
 - Docker Registry privé
 
 ### 🔐 Sécurité (DevSecOps)
