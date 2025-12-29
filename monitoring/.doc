@@ -1,0 +1,30 @@
+ /*stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('Sonarqube') {
+                    script {
+                        sh """
+                            ${tool('SonarScanner')}/bin/sonar-scanner \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
+                                -Dsonar.projectName=${SERVICE_NAME} \
+                                -Dsonar.sources=${SERVICE_NAME} \
+                                -Dsonar.python.version=${PYTHON_VERSION} \
+                                -Dsonar.python.coverage.reportPaths=coverage.xml \
+                                -Dsonar.exclusions=**/venv/**,**/__pycache__/** \
+                                -Dsonar.sourceEncoding=UTF-8 \
+                                -Dsonar.projectVersion=${env.BUILD_NUMBER}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage("Quality Gates") {
+            steps {
+                retry(5) {
+                    timeout(time: 1, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                    sleep(time: 5, unit: 'SECONDS')
+                }
+            }
+        }*/
