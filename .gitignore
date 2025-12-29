@@ -27,3 +27,8 @@ Thumbs.db
 *.swo
 *.md
 
+# Kubernetes secrets (prevent committing raw secret manifests)
+**/*secret*.yaml
+**/*Secret*.yaml
+**/*secret.yaml
+
