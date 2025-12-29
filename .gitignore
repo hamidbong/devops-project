@@ -31,4 +31,5 @@ Thumbs.db
 **/*secret*.yaml
 **/*Secret*.yaml
 **/**/mongo-secret.yaml
-
+**/**/terraform.tfstate.backup
+**/**/terraform.tfstate
