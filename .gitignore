@@ -28,7 +28,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
-*.md
 
 # Kubernetes secrets (prevent committing raw secret manifests)
 **/*secret*.yaml
